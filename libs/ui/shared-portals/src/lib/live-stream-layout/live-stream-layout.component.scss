@@ -1,0 +1,91 @@
+@use '@angular/material' as mat;
+
+:host {
+    width: 100%;
+}
+
+.itv-container {
+    display: grid;
+    // Use auto for sidebar to respect the directive's width
+    grid-template-columns: auto 1fr 1fr;
+    grid-template-rows: 50% 50%;
+    gap: 0 0;
+    grid-auto-flow: row;
+    grid-template-areas:
+        'sidebar video-player video-player'
+        'sidebar epg epg';
+    height: 100%;
+}
+
+.itv-container-epg {
+    display: grid;
+    // Use auto for sidebar to respect the directive's width
+    grid-template-columns: auto 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 0 0;
+    grid-auto-flow: row;
+    grid-template-areas:
+        'sidebar epg epg'
+        'sidebar epg epg'
+        'sidebar epg epg';
+    height: 100%;
+}
+
+.sidebar {
+    grid-area: sidebar;
+    // Default width (controlled by resizable directive)
+    width: 400px;
+    min-width: 250px;
+    max-width: 600px;
+    flex-shrink: 0;
+    position: relative;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.video-player { grid-area: video-player; }
+
+.epg { grid-area: epg; }
+
+.search-panel {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: -15px;
+}
+
+.search-bar {
+    width: 90%;
+    @include mat.form-field-density(-5);
+}
+
+.epg-content {
+    height: calc(50vh - 20px);
+    overflow-y: auto;
+    border-right: #111 1px solid;
+    padding-bottom: 20px; 
+}
+
+.sidebar-content {
+    height: 100%;
+    overflow-y: auto;
+    border-right: #111 1px solid;
+    overflow-x: hidden;
+}
+
+.no-channel-selected {
+    margin: 10px;
+}
+
+mat-list-option {
+    width: 100%;
+}
+
+::ng-deep {
+    .search-bar {
+        div {
+            border-radius: 20px;
+        }
+    }
+}

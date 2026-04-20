@@ -1,0 +1,76 @@
+button {
+    cursor: pointer !important;
+    text-transform: uppercase;
+}
+
+.settings-container {
+    overflow: auto;
+    height: calc(100vh - 70px);
+}
+
+.row {
+    display: flex;
+    padding: 10px;
+
+    :nth-child(2) {
+        text-align: right;
+
+        mat-form-field {
+            font-size: 14px;
+        }
+    }
+}
+
+.column {
+    flex: 1;
+
+    p {
+        font-size: 0.9em;
+        opacity: 0.6;
+        padding: 2px 0;
+        margin: 0;
+    }
+}
+
+.margin-right {
+    margin-right: 10px;
+}
+
+.action-buttons {
+    margin-top: 10px;
+
+    button {
+        margin: 0 10px;
+    }
+}
+
+.remote-control-urls {
+    text-align: right;
+}
+
+.remote-control-url-item {
+    margin-bottom: 8px;
+}
+
+.url-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.remote-control-url {
+    font-family: monospace;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.qr-code-container {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 0;
+}

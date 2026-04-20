@@ -1,0 +1,6 @@
+*.yml 
+dist 
+build 
+coverage 
+release 
+.angular

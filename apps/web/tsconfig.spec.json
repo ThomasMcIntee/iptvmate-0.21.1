@@ -1,0 +1,20 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../dist/out-tsc",
+        "module": "commonjs",
+        "target": "es2016",
+        "types": ["jest", "node"],
+        "moduleResolution": "node10"
+    },
+    "files": ["src/test-setup.ts", "../../global.d.ts"],
+    "include": [
+        "jest.config.ts",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts",
+        "src/**/*.d.ts",
+        "../../libs/services/src/lib/epg.service.spec.ts",
+        "../../libs/ui/components/src/lib/confirm-dialog/dialog.service.spec.ts",
+        "../../libs/ui/pipes/src/lib/moment-date.pipe.spec.ts"
+    ]
+}

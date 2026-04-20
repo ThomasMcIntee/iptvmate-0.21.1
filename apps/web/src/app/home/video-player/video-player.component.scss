@@ -1,0 +1,103 @@
+.main-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden; // Prevent horizontal scrollbar from resize handle
+}
+
+.mat-drawer-content {
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+.mat-drawer {
+    // Width is controlled by appResizable directive
+    // Default: 350px, min: 200px, max: 600px
+    overflow-x: hidden !important; // Hide horizontal scrollbar
+
+    .resize-handle--right {
+        right: 0;
+    }
+}
+
+// Ensure mat-drawer inner container fills the drawer width
+::ng-deep .mat-drawer-inner-container {
+    width: 100% !important;
+}
+
+.custom-player {
+    padding: 20px;
+}
+
+@media only screen and (max-width: 599px) {
+    .main-container {
+        display: flex;
+        flex-direction: column-reverse;
+        top: unset;
+    }
+
+    .mat-drawer {
+        height: 50vh;
+        width: 100%;
+        position: unset;
+    }
+
+    .drawer-content {
+        height: 50vh;
+        margin-left: 0 !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .custom-player {
+        display: flex;
+        margin-top: 50px;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+
+        img {
+            filter: invert(100%);
+            width: 400px;
+        }
+    }
+}
+
+.channel-number-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.channel-number-display {
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 6rem;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    padding: 2rem 3rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    min-width: 120px;
+    text-align: center;
+    letter-spacing: 0.05em;
+    animation: scaleIn 0.15s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

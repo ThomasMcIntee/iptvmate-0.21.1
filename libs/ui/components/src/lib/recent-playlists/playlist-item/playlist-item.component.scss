@@ -1,0 +1,184 @@
+mat-list-item {
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    margin: 2px 4px;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+}
+
+// Light theme hover
+@media (prefers-color-scheme: light) {
+    mat-list-item:hover {
+        background-color: rgba(0, 0, 0, 0.04) !important;
+    }
+}
+
+.mat-list-base {
+    padding-top: 0 !important;
+}
+
+.meta {
+    font-size: 12px !important;
+    color: #666;
+    margin-top: 2px !important;
+}
+
+.cdk-drag-preview {
+    box-sizing: border-box;
+    border-radius: 12px;
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.25),
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 2px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0.9;
+}
+
+.cdk-drag-placeholder {
+    opacity: 0;
+}
+
+.cdk-drag-animating {
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drag-icon {
+    cursor: move;
+    margin-right: 0;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+::ng-deep {
+    @media only screen and (max-width: 480px) {
+        .main-container {
+            .favorites-icon,
+            .upload-type-icon,
+            .refresh-btn,
+            .edit-btn,
+            .delete-btn {
+                display: none;
+            }
+        }
+
+        .mdc-list-item__content {
+            padding-left: 20px;
+        }
+    }
+}
+
+.action-buttons {
+    align-self: center !important;
+
+    button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+            transform: scale(1.05);
+
+            mat-icon {
+                opacity: 1;
+            }
+        }
+
+        mat-icon {
+            opacity: 0.85;
+            transition: opacity 0.3s ease;
+        }
+    }
+}
+
+// Light theme action buttons
+@media (prefers-color-scheme: light) {
+    .action-buttons button:hover {
+        background-color: rgba(0, 0, 0, 0.04) !important;
+    }
+}
+
+.icon-container {
+    position: relative;
+    display: inline-flex;
+
+    .upload-type-icon {
+        opacity: 0.75;
+        transition: opacity 0.3s ease;
+    }
+
+    mat-list-item:hover & .upload-type-icon {
+        opacity: 0.95;
+    }
+}
+
+.status-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    right: 0;
+    bottom: 0;
+    border: 2px solid var(--background-color, #131316);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.status-active {
+    background-color: #4caf50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+.status-inactive {
+    background-color: #f44336;
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+}
+
+.status-expired {
+    background-color: #ff9800;
+    box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+}
+
+.status-unavailable {
+    background-color: #666666;
+}
+
+.auto-refresh-indicator {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    color: #4caf50;
+    background-color: var(--background-color, #131316);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+
+    mat-list-item:hover & {
+        color: #66bb6a;
+        transform: rotate(90deg);
+    }
+}
+
+// Light theme auto-refresh indicator
+@media (prefers-color-scheme: light) {
+    .auto-refresh-indicator {
+        background-color: #ffffff;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .upload-type-icon,
+    .icon-container {
+        display: none;
+    }
+}

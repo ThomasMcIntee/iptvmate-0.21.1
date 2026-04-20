@@ -1,0 +1,96 @@
+// @import 'themes/';
+@import '@yangkghjh/videojs-aspect-ratio-panel/dist/videojs-aspect-ratio-panel.css';
+@import '../../../libs/ui/components/src/lib/resizable/resizable.scss';
+
+// macOS specific styles - space for traffic lights
+app-root.macos-platform app-header .modern-header {
+    padding-left: 80px;
+}
+
+app-root.macos-platform .current-playlist {
+    padding-top: 30px;
+}
+
+app-root.macos-platform app-navigation .portal-status-container {
+    padding-top: 30px;
+}
+
+body,
+html {
+    user-select: none;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
+
+// Re-enable context menu and text selection for input fields
+input,
+textarea {
+    user-select: text;
+}
+
+@media (display-mode: standalone) {
+    body {
+        overscroll-behavior-y: contain;
+        overflow: hidden;
+    }
+}
+
+.full-width {
+    width: 100%;
+}
+.mat-tab-label-active {
+    opacity: 1 !important;
+}
+
+input,
+button,
+textarea,
+:focus {
+    outline: none;
+}
+
+.dark-theme {
+    ::-webkit-scrollbar {
+        overflow-y: scroll;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: rgb(60 60 60);
+        border-radius: 10px;
+    }
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.about-dialog-overlay {
+    .mat-mdc-dialog-surface {
+        text-align: center;
+        background: black !important;
+        color: #fff !important;
+        padding: 10px;
+    }
+}
+
+.scroll-viewport-portals {
+    min-height: calc(100vh - 170px) !important;
+    overflow-x: hidden !important;
+}
+
+.mat-drawer-inner-container {
+    overflow: hidden !important;
+}
+
+.cdk-overlay-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+// Full-screen overlay dialogs (global search/recent) must stay interactive in Electron.
+.global-search-overlay,
+.global-search-overlay .mat-mdc-dialog-surface,
+.global-search-overlay .mat-mdc-dialog-container {
+    app-region: no-drag;
+}

@@ -1,0 +1,63 @@
+<div class="program-dialog">
+    <!-- Header with channel and time -->
+    <header class="program-header">
+        <div class="time-block">
+            <div class="time-display">
+                <span class="time-start">{{ formatTime(epgProgram.start) }}</span>
+                <span class="time-separator">—</span>
+                <span class="time-end">{{ formatTime(epgProgram.stop) }}</span>
+            </div>
+            <div class="date-display">{{ formatDate(epgProgram.start) }}</div>
+        </div>
+        @if (channelName) {
+            <div class="channel-badge">
+                <span class="channel-icon">📺</span>
+                <span class="channel-name">{{ channelName }}</span>
+            </div>
+        }
+    </header>
+
+    <!-- Title section -->
+    <div class="program-title-section">
+        <h1 class="program-title">{{ epgProgram.title }}</h1>
+        @if (epgProgram.category) {
+            <span class="category-tag">{{ epgProgram.category }}</span>
+        }
+    </div>
+
+    <!-- Content -->
+    <div class="program-content">
+        @if (epgProgram.desc) {
+            <p class="program-description">{{ epgProgram.desc }}</p>
+        }
+
+        <!-- Meta info grid -->
+        <div class="meta-grid">
+            @if (epgProgram.episodeNum) {
+                <div class="meta-item">
+                    <span class="meta-label">{{ 'EPG.PROGRAM_DIALOG.EPISODE' | translate }}</span>
+                    <span class="meta-value">{{ epgProgram.episodeNum }}</span>
+                </div>
+            }
+            @if (epgProgram.rating) {
+                <div class="meta-item">
+                    <span class="meta-label">{{ 'EPG.PROGRAM_DIALOG.PARENTAL_RATING_SYSTEM' | translate }}</span>
+                    <span class="meta-value rating">{{ epgProgram.rating }}</span>
+                </div>
+            }
+            @if (duration) {
+                <div class="meta-item">
+                    <span class="meta-label">{{ 'EPG.PROGRAM_DIALOG.DURATION' | translate }}</span>
+                    <span class="meta-value">{{ duration }}</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="program-footer">
+        <button class="close-button" mat-dialog-close>
+            {{ 'HOME.PLAYLISTS.INFO_DIALOG.CLOSE' | translate }}
+        </button>
+    </footer>
+</div>

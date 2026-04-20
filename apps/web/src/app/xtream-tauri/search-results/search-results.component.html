@@ -1,0 +1,133 @@
+<app-search-layout
+    [searchTerm]="searchTerm()"
+    [resultsCount]="xtreamStore.searchResults().length"
+    [isLoading]="xtreamStore.isSearching()"
+    [showCloseButton]="false"
+    [showResultsCount]="!isGlobalSearch || !groupByPlaylist()"
+    (searchTermChange)="updateSearchTerm($event)"
+    (closeClick)="onCloseDialog()"
+>
+    <!-- Type filters -->
+    <ng-container filters>
+        @if (!isGlobalSearch) {
+            @for (filter of filterConfig; track filter.key) {
+                <mat-checkbox
+                    [ngModel]="filters()[filter.key]"
+                    (ngModelChange)="updateFilter(filter.key, $event)"
+                >
+                    {{ filter.translationKey | translate }}
+                </mat-checkbox>
+            }
+        }
+    </ng-container>
+
+    <ng-container header-actions>
+        <mat-checkbox
+            [ngModel]="excludeHidden()"
+            (ngModelChange)="toggleExcludeHidden($event)"
+        >
+            {{ 'PORTALS.SEARCH_VIEW.VISIBLE_CATEGORIES_ONLY' | translate }}
+        </mat-checkbox>
+        @if (isGlobalSearch) {
+            <button mat-icon-button (click)="onCloseDialog()">
+                <mat-icon>close</mat-icon>
+            </button>
+        }
+    </ng-container>
+
+    <ng-container subheader>
+        @if (isGlobalSearch) {
+            <div class="global-search-subheader">
+                <div class="global-search-subheader-left">
+                    <div class="global-search-note">
+                        <mat-icon>info_outline</mat-icon>
+                        <span>{{ 'PORTALS.SEARCH_VIEW.XTREAM_ONLY_NOTE' | translate }}</span>
+                    </div>
+                    <div class="global-search-filters">
+                        @for (filter of filterConfig; track filter.key) {
+                            <mat-checkbox
+                                [ngModel]="filters()[filter.key]"
+                                (ngModelChange)="updateFilter(filter.key, $event)"
+                            >
+                                {{ filter.translationKey | translate }}
+                            </mat-checkbox>
+                        }
+                    </div>
+                </div>
+                <mat-checkbox
+                    [ngModel]="groupByPlaylist()"
+                    (ngModelChange)="toggleGroupByPlaylist($event)"
+                >
+                    {{ 'PORTALS.SEARCH_VIEW.GROUP_BY_PLAYLIST' | translate }}
+                </mat-checkbox>
+            </div>
+        }
+    </ng-container>
+
+    <!-- Results -->
+    <ng-container results>
+        @if (isGlobalSearch) {
+            <!-- Global Search Results -->
+            @if (groupByPlaylist()) {
+                <!-- Grouped by playlist -->
+                <div class="playlist-section">
+                    <h2 class="section-title">
+                        Found {{ xtreamStore.searchResults().length }} items across
+                        {{ (groupedResults() | keyvalue).length }} playlists
+                    </h2>
+                    @for (
+                        group of groupedResults() | keyvalue;
+                        track group.key
+                    ) {
+                        <div class="playlist-group">
+                            <h3 class="playlist-title">
+                                <mat-icon>playlist_play</mat-icon>
+                                {{ group.key }}
+                                <span class="item-count"
+                                    >({{ $any(group).value.length }} items)</span
+                                >
+                            </h3>
+                            <div class="results-grid">
+                                @for (item of $any(group).value; track item.id) {
+                                    <app-content-card
+                                        [posterUrl]="item.poster_url"
+                                        [title]="item.title"
+                                        [type]="item.type"
+                                        [showPlaceholder]="true"
+                                        (cardClick)="selectItem(item)"
+                                    />
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            } @else {
+                <!-- Flat list -->
+                <div class="results-grid">
+                    @for (item of xtreamStore.searchResults(); track item.id) {
+                        <app-content-card
+                            [posterUrl]="item.poster_url"
+                            [title]="item.title"
+                            [type]="item.type"
+                            [showPlaceholder]="true"
+                            (cardClick)="selectItem(item)"
+                        />
+                    }
+                </div>
+            }
+        } @else {
+            <!-- Playlist-level Search Results -->
+            <div class="results-grid">
+                @for (item of xtreamStore.searchResults(); track item.id) {
+                    <app-content-card
+                        [posterUrl]="item.poster_url"
+                        [title]="item.title"
+                        [type]="item.type"
+                        [showPlaceholder]="true"
+                        (cardClick)="selectItem(item)"
+                    />
+                }
+            </div>
+        }
+    </ng-container>
+</app-search-layout>

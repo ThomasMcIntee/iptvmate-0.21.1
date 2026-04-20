@@ -1,0 +1,197 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import {
+    ComponentFixture,
+    inject,
+    TestBed,
+    waitForAsync,
+} from '@angular/core/testing';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { provideMockStore } from '@ngrx/store/testing';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockModule, MockPipe, MockProviders } from 'ng-mocks';
+import { NgxIndexedDBService } from 'ngx-indexed-db';
+import { of } from 'rxjs';
+import { DataService, PlaylistsService } from 'services';
+import { Language, STORE_KEY, Theme } from 'shared-interfaces';
+import { AppComponent } from './app.component';
+import { ElectronServiceStub } from './services/electron.service.stub';
+import { SettingsService } from './services/settings.service';
+
+jest.spyOn(global.console, 'error').mockImplementation(() => {
+    // suppress console.error output during tests
+});
+
+describe('AppComponent', () => {
+    let component: AppComponent;
+    let electronService: DataService;
+    let fixture: ComponentFixture<AppComponent>;
+    let settingsService: SettingsService;
+    let translateService: TranslateService;
+    const defaultLanguage = 'en';
+
+    beforeEach(waitForAsync(() => {
+        TestBed.configureTestingModule({
+            declarations: [AppComponent, MockPipe(TranslatePipe)],
+            providers: [
+                MockProviders(
+                    TranslateService,
+                    PlaylistsService,
+                    NgxIndexedDBService,
+                    MatSnackBar
+                ),
+                SettingsService,
+                {
+                    provide: DataService,
+                    useClass: ElectronServiceStub,
+                },
+                provideMockStore(),
+            ],
+            imports: [
+                MockModule(MatSnackBarModule),
+                MockComponent(NgxWhatsNewComponent),
+                RouterTestingModule,
+                HttpClientTestingModule,
+            ],
+        }).compileComponents();
+    }));
+
+    beforeEach(() => {
+        electronService = TestBed.inject(DataService);
+        fixture = TestBed.createComponent(AppComponent);
+        settingsService = TestBed.inject(SettingsService);
+        translateService = TestBed.inject(TranslateService);
+        component = fixture.componentInstance;
+
+        // TODO: investigate in detail
+        component.triggerAutoUpdateMechanism = jest.fn();
+        component.modals = [];
+        component.checkForUpdates = jest.fn();
+        fixture.detectChanges();
+    });
+
+    it('should create the component and set default language', () => {
+        jest.spyOn(translateService, 'setDefaultLang');
+        jest.spyOn(component, 'setRendererListeners');
+        const fixture = TestBed.createComponent(AppComponent);
+        const app = fixture.debugElement.componentInstance;
+        expect(app).toBeTruthy();
+        expect(component.DEFAULT_LANG).toEqual(Language.ENGLISH);
+    });
+
+    it('should init component', () => {
+        jest.spyOn(translateService, 'setDefaultLang');
+        jest.spyOn(component, 'setRendererListeners');
+        jest.spyOn(component, 'initSettings');
+        jest.spyOn(component, 'handleWhatsNewDialog');
+        component.ngOnInit();
+        expect(translateService.setDefaultLang).toHaveBeenCalledWith(
+            defaultLanguage
+        );
+        expect(component.setRendererListeners).toHaveBeenCalledTimes(1);
+        expect(component.initSettings).toHaveBeenCalledTimes(1);
+        expect(component.handleWhatsNewDialog).toHaveBeenCalledTimes(1);
+    });
+
+    describe('Test ipc listeners and commands', () => {
+        it('should set IPC listeners', () => {
+            jest.spyOn(electronService, 'listenOn');
+            component.setRendererListeners();
+            expect(electronService.listenOn).toHaveBeenCalledTimes(
+                component.commandsList.length
+            );
+        });
+
+        it('should remove all ipc listeners on destroy', () => {
+            jest.spyOn(electronService, 'removeAllListeners');
+            component.ngOnDestroy();
+            expect(electronService.removeAllListeners).toHaveBeenCalledTimes(
+                component.commandsList.length
+            );
+        });
+
+        it('should navigate to the provided route', inject(
+            [Router],
+            (router: Router) => {
+                const route = '/add-playlists';
+                jest.spyOn(router, 'navigateByUrl');
+                component.navigateToRoute(route);
+                expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+                expect(router.navigateByUrl).toHaveBeenCalledWith(route);
+            }
+        ));
+    });
+
+    describe('Test version handling', () => {
+        it('should get actual app version which is outdated and show updates dialog', () => {
+            const currentAppVersion = '0.0.1';
+            const spyOnSettingsGet = jest
+                .spyOn(settingsService, 'getValueFromLocalStorage')
+                .mockReturnValue(of(currentAppVersion));
+
+            expect(spyOnSettingsGet).toHaveBeenCalled();
+        });
+
+        it('should get actual app version which is not outdated and do not shop updates dialog', () => {
+            const currentAppVersion = '1.0.0';
+            const spyOnSettingsGet = jest
+                .spyOn(settingsService, 'getValueFromLocalStorage')
+                .mockReturnValue(of(currentAppVersion));
+
+            expect(spyOnSettingsGet).toHaveBeenCalled();
+        });
+    });
+
+    describe('Set initial settings', () => {
+        const theme = Theme.DarkTheme;
+        const language = 'es';
+        const epgUrl = ['http://localhost/epg.xml'];
+
+        beforeEach(() => {
+            jest.spyOn(electronService, 'sendIpcEvent');
+            jest.spyOn(settingsService, 'changeTheme');
+            jest.spyOn(component, 'handleWhatsNewDialog');
+            jest.spyOn(translateService, 'use');
+        });
+
+        it('should get and init settings (all settings are defined)', () => {
+            const spyOnSettingsGet = jest
+                .spyOn(settingsService, 'getValueFromLocalStorage')
+                .mockReturnValue(of({ theme, epgUrl, language }));
+
+            component.initSettings();
+
+            expect(spyOnSettingsGet).toHaveBeenCalledWith(STORE_KEY.Settings);
+            expect(settingsService.changeTheme).toHaveBeenCalledWith(theme);
+            expect(electronService.sendIpcEvent).toHaveBeenCalledTimes(1);
+            expect(translateService.use).toHaveBeenCalledWith(language);
+        });
+
+        it('should get and init settings (nothing is defined)', () => {
+            const spyOnSettingsGet = jest
+                .spyOn(settingsService, 'getValueFromLocalStorage')
+                .mockReturnValue(of());
+
+            component.initSettings();
+
+            expect(spyOnSettingsGet).toHaveBeenCalledWith(STORE_KEY.Settings);
+            expect(settingsService.changeTheme).toHaveBeenCalledTimes(0);
+            expect(electronService.sendIpcEvent).toHaveBeenCalledTimes(0);
+            expect(translateService.use).toHaveBeenCalledTimes(0);
+        });
+
+        it('should get and init settings (only theme is defined)', () => {
+            const spyOnSettingsGet = jest
+                .spyOn(settingsService, 'getValueFromLocalStorage')
+                .mockReturnValue(of({ theme }));
+
+            component.initSettings();
+
+            expect(spyOnSettingsGet).toHaveBeenCalledWith(STORE_KEY.Settings);
+            expect(settingsService.changeTheme).toHaveBeenCalledWith(theme);
+            expect(electronService.sendIpcEvent).toHaveBeenCalledTimes(1);
+            expect(translateService.use).toHaveBeenCalledWith(defaultLanguage);
+        });
+    });
+});

@@ -1,0 +1,41 @@
+@if (itemDetails) {
+    @switch (itemDetails.category_id) {
+        @case ('vod') {
+            @if (itemDetails.details?.series?.length > 0) {
+                <!-- VOD item with embedded series (vclub) -->
+                <app-stalker-series-view
+                    [vodWithSeries]="itemDetails.details"
+                    (backClicked)="onSeriesBack()"
+                />
+            } @else if (itemDetails.details?.is_series === true) {
+                <!-- VOD item that is actually a series (Ministra plugin is_series=1) -->
+                <app-stalker-series-view
+                    (backClicked)="onSeriesBack()"
+                />
+            } @else if (vodDetailsItem) {
+                <!-- Regular VOD item -->
+                <app-vod-details
+                    [item]="vodDetailsItem"
+                    [isFavorite]="isSelectedVodFavorite()"
+                    (playClicked)="onVodPlay($event)"
+                    (favoriteToggled)="onVodFavoriteToggled($event)"
+                    (backClicked)="onVodBack()"
+                />
+            }
+        }
+        @case ('series') {
+            <app-stalker-series-view (backClicked)="onSeriesBack()" />
+        }
+    }
+} @else {
+    <app-favorites-layout
+        [categories]="categories() ?? []"
+        [favorites]="favoritesToShow() ?? []"
+        [playlistSubtitle]="'Stalker Portal'"
+        [playlistTitle]="currentPlaylist()?.title || 'Portal'"
+        [selectedCategoryId]="selectedCategoryId()"
+        (categoryClicked)="setCategoryId($event.category_id)"
+        (removeFavorite)="removeFromFavorites($event)"
+        (openItem)="openItem($event)"
+    />
+}

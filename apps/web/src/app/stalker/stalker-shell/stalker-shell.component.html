@@ -1,0 +1,10 @@
+<div class="stalker-container">
+    <app-navigation
+        class="navigation-sidebar"
+        [navigationItems]="mainNavigationItems"
+        (categoryClick)="setContentType($any($event))"
+        (pageClicked)="handlePageClick()"
+        [selectedContentType]="stalkerStore.selectedContentType()"
+    />
+    <router-outlet />
+</div>

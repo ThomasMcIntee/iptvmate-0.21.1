@@ -1,0 +1,238 @@
+@use '@angular/material' as mat;
+
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    container-type: inline-size;
+}
+
+.channels-list {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 56px); // Account for search panel
+    overflow: hidden;
+    width: 100%;
+}
+
+.scroll-viewport-portals {
+    height: 100%;
+    width: 100%;
+    padding: 4px 0;
+
+    // Ensure the virtual scroll content respects parent width
+    ::ng-deep .cdk-virtual-scroll-content-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        contain: layout style;
+    }
+}
+
+.channel-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    height: 64px;
+    box-sizing: border-box;
+    gap: 8px;
+    // Critical: use margin-based calc and ensure it doesn't overflow
+    width: calc(100% - 8px);
+    min-width: 0; // Allow shrinking below content size
+    overflow: hidden;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+
+        .title {
+            color: #1db954;
+        }
+    }
+
+    &.active {
+        background-color: rgba(29, 185, 84, 0.2);
+
+        .title {
+            color: #1db954;
+        }
+    }
+}
+
+.stream-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.channel-info {
+    flex: 1 1 0; // grow, shrink, basis=0 forces it to shrink
+    min-width: 0; // Critical for text truncation in flex
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+
+    .title {
+        font-weight: 600;
+        font-size: 14px;
+        transition: color 0.2s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .current-program {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0.8;
+    }
+
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        opacity: 0.6;
+
+        span {
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            min-width: 20px;
+
+            .progress {
+                height: 100%;
+                background: #1db954;
+                transition: width 1s linear;
+            }
+        }
+    }
+
+    .no-epg-placeholder {
+        opacity: 0.5;
+
+        .placeholder-bar {
+            height: 10px;
+            width: 60%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin: 2px 0;
+        }
+    }
+}
+
+.favorite-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.search-panel {
+    padding: 8px 12px;
+    flex-shrink: 0;
+    height: 56px;
+    box-sizing: border-box;
+}
+
+.search-bar {
+    width: 100%;
+    @include mat.form-field-density(-5);
+}
+
+::ng-deep {
+    .search-bar {
+        div {
+            border-radius: 20px;
+        }
+    }
+
+    div[matformfieldlineripple] {
+        display: none;
+    }
+}
+
+// Container queries for responsive behavior
+@container (max-width: 350px) {
+    .channel-item {
+        gap: 6px;
+        padding: 6px;
+    }
+
+    .stream-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .favorite-btn {
+        padding: 4px;
+
+        mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    .progress-container {
+        display: none !important;
+    }
+
+    .no-epg-placeholder {
+        display: none !important;
+    }
+}
+
+@container (max-width: 300px) {
+    .stream-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .favorite-btn {
+        display: none;
+    }
+}
+
+@container (max-width: 260px) {
+    .stream-icon {
+        display: none;
+    }
+
+    .channel-item {
+        height: 48px;
+    }
+}

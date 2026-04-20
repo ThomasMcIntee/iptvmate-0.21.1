@@ -1,0 +1,90 @@
+@use '@angular/material' as mat;
+@use '../../../shared/styles/content-grid' as grid;
+
+:host {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; // Important for proper flex behavior
+}
+
+.content-header {
+    text-transform: capitalize;
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+}
+
+.scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.favorites-container {
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.items-grid {
+    @include grid.content-grid(140px, 20px);
+    padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.no-items {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+
+    mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+}
+
+.sidebar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    button {
+        @include mat.form-field-density(-5);
+    }
+}

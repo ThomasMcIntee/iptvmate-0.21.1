@@ -1,0 +1,215 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+// Header divider
+.header-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.12);
+}
+
+// Dark theme support
+::ng-deep .dark-theme {
+    .header-divider {
+        background: rgba(255, 255, 255, 0.12);
+    }
+}
+
+// Channel header
+#channel-header {
+    flex-direction: column;
+    box-sizing: border-box;
+    display: flex;
+
+    .channel-info {
+        flex-direction: row;
+        box-sizing: border-box;
+        display: flex;
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .channel-icon {
+        overflow: hidden;
+        place-content: center;
+        align-items: center;
+        flex-direction: row;
+        box-sizing: border-box;
+        display: flex;
+        flex: 0 0 48px;
+        width: 48px;
+        height: 48px;
+        border-radius: 4px;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    }
+
+    .channel-details {
+        flex: 1 1 100%;
+        box-sizing: border-box;
+        max-width: 100%;
+        align-self: center;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .channel-name {
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 500;
+        font-size: 0.9rem;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .program-name {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size: 0.8rem;
+        font-weight: 500;
+        opacity: 0.85;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.2;
+    }
+}
+
+// Date navigator
+#date-navigator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    gap: 8px;
+
+    button {
+        transition: all 0.2s ease;
+
+        &[disabled] {
+            opacity: 0.3;
+        }
+    }
+
+    .selected-date {
+        flex: 1;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-align: center;
+        opacity: 0.8;
+    }
+}
+
+// Program list styling
+#program-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+// Program list items
+.program-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    transition: background-color 0.2s ease;
+    position: relative;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: default;
+
+    &.clickable {
+        cursor: pointer;
+
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+    }
+
+    &.active {
+        background-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .program-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .program-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 500;
+        line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .program-progress {
+        margin-top: 4px;
+    }
+}
+
+// Dark theme support
+::ng-deep .dark-theme {
+    .program-item {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+
+        &.clickable:hover {
+            background-color: rgba(255, 255, 255, 0.04);
+        }
+
+        &.active {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+    }
+}
+
+// Progress bar (matching channel list)
+.epg-progress-track {
+    position: relative;
+    width: 100%;
+    height: 3px;
+    background: rgba(128, 128, 128, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.epg-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+    border-radius: 2px;
+    transition: width 0.5s ease-out;
+    box-shadow: 0 0 6px rgba(124, 58, 237, 0.4);
+}
+
+// Empty state styling
+.epg-not-available {
+    padding: 24px;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    opacity: 0.6;
+    font-style: italic;
+}

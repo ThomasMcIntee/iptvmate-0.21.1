@@ -1,0 +1,124 @@
+@let items = filteredItems$ | async;
+@let timeshiftUntil = timeshiftUntil$ | async;
+
+<!-- channel info panel -->
+<div id="channel-header" color="primary">
+    <div class="channel-info">
+        <div class="channel-icon">
+            @if (getChannelIcon(channel)) {
+                <img [src]="getChannelIcon(channel)" width="48" alt="icon" />
+            }
+        </div>
+        <div class="channel-details">
+            <div class="channel-name">
+                {{ getChannelDisplayName(channel) }}
+            </div>
+            <div class="program-name">
+                {{
+                    playingNow
+                        ? (playingNow.title || 'EPG.LIVE_STREAM' | translate)
+                        : ('EPG.LIVE_STREAM' | translate)
+                }}
+            </div>
+        </div>
+    </div>
+    <div class="header-divider"></div>
+    <div id="date-navigator">
+        <button
+            class="previous-day"
+            mat-icon-button
+            (click)="changeDate('prev')"
+            [matTooltip]="'EPG.PREVIOUS_DAY' | translate"
+        >
+            <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="selected-date">
+            {{ dateToday | momentDate: 'MMMM Do, dddd' : 'YYYY-MM-DD' }}</span
+        >
+        <button
+            class="next-day"
+            mat-icon-button
+            (click)="changeDate('next')"
+            [matTooltip]="'EPG.NEXT_DAY' | translate"
+        >
+            <mat-icon>chevron_right</mat-icon>
+        </button>
+    </div>
+</div>
+
+@if (timeshiftUntil) {
+    <!-- program list -->
+    <div id="program-list">
+        @if (items?.length > 0) {
+            @for (program of items; track $index) {
+                @if (
+                    program.start < timeshiftUntil || program.start >= timeNow
+                ) {
+                    <div class="program-item">
+                        <div class="program-meta">
+                            <app-epg-list-item
+                                [timeshiftUntil]="timeshiftUntil"
+                                [timeNow]="timeNow"
+                                [item]="program"
+                            />
+                        </div>
+                        <div class="program-title">
+                            {{ program?.title }}
+                        </div>
+                        @if (isProgramPlaying(program)) {
+                            <div class="program-progress">
+                                <div class="epg-progress-track">
+                                    <div
+                                        class="epg-progress-fill"
+                                        [style.width.%]="calculateProgress(program)"
+                                    ></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                } @else {
+                    <div
+                        class="program-item clickable"
+                        [class.active]="
+                            timeNow >= program.start && timeNow <= program.stop
+                        "
+                        (click)="
+                            setEpgProgram(
+                                program,
+                                timeNow >= program.start &&
+                                    timeNow <= program.stop,
+                                program.start > timeshiftUntil
+                            )
+                        "
+                    >
+                        <div class="program-meta">
+                            <app-epg-list-item
+                                [timeshiftUntil]="timeshiftUntil"
+                                [timeNow]="timeNow"
+                                [item]="program"
+                            />
+                        </div>
+                        <div
+                            class="program-title"
+                            [innerHTML]="program.title"
+                        ></div>
+                        @if (isProgramPlaying(program)) {
+                            <div class="program-progress">
+                                <div class="epg-progress-track">
+                                    <div
+                                        class="epg-progress-fill"
+                                        [style.width.%]="calculateProgress(program)"
+                                    ></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        } @else {
+            <div class="epg-not-available">
+                {{ 'EPG.EPG_NOT_AVAILABLE_DATE' | translate }}
+            </div>
+        }
+    </div>
+}
