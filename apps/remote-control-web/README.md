@@ -1,10 +1,10 @@
 # Remote Control Web App
 
-A lightweight, mobile-optimized web application that provides remote control functionality for IPTVnator. Control live channel switching from your phone or tablet on the same network.
+A lightweight, mobile-optimized web application that provides remote control functionality for iptvmate. Control live channel switching from your phone or tablet on the same network.
 
 ## Overview
 
-This is a standalone Angular application designed to be served by IPTVnator's Electron backend via an HTTP server. It provides a beautiful, Apple TV-inspired remote control interface that communicates with the main IPTVnator desktop application to change channels.
+This is a standalone Angular application designed to be served by iptvmate's Electron backend via an HTTP server. It provides a beautiful, Apple TV-inspired remote control interface that communicates with the main iptvmate desktop application to change channels.
 
 ## Features
 
@@ -56,7 +56,7 @@ This is a standalone Angular application designed to be served by IPTVnator's El
 
 ### Enable Remote Control
 
-1. Open IPTVnator desktop app
+1. Open iptvmate desktop app
 2. Go to **Settings**
 3. Enable **"Remote Control"** checkbox
 4. Optionally change the port (default: 8765)
@@ -182,4 +182,4 @@ Potential improvements:
 
 ## License
 
-Same as IPTVnator main project.
+Same as iptvmate main project.

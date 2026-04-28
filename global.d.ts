@@ -11,6 +11,7 @@ declare global {
     interface Window {
         electron: {
             getAppVersion: () => Promise<string>;
+            getStreamProxyPort: () => Promise<number | null>;
             platform: string;
             fetchPlaylistByUrl: (
                 url: string,

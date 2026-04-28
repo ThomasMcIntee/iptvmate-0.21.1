@@ -2,7 +2,7 @@
     "CLOSE": "Fermer",
     "PLAYLISTS": "Listes de lecture",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "Choisissez une liste de lecture, ou ajoutez en une nouvelle via un transfert de fichier ou via une URL",
         "TABS": {
             "RECENTLY_ADDED": "Récemment ajoutés",
@@ -15,7 +15,7 @@
         "PLAYLISTS": {
             "NO_PLAYLISTS": "Aucune liste de lecture n'a été ajoutée",
             "ADD_FIRST": "Veuillez ajouter votre première liste de lecture depuis un autre onglet",
-            "WELCOME_TITLE": "Bienvenue sur IPTVnator",
+            "WELCOME_TITLE": "Bienvenue sur iptvmate",
             "WELCOME_DESCRIPTION": "Commencez votre voyage de streaming en ajoutant votre première liste de lecture. Connectez-vous à votre service IPTV préféré et profitez de la télévision en direct, des films et des séries.",
             "ADD_YOUR_FIRST": "Ajouter votre première liste",
             "FEATURE_M3U": "Fichiers M3U/M3U8",
@@ -151,7 +151,7 @@
         "THEME_DESCRIPTION": "Sélectionnez le thème visuel de l'application",
         "SHOW_CAPTIONS_DESCRIPTION": "Afficher ou masquer les sous-titres par défaut",
         "VERSION_DESCRIPTION": "Version actuelle de l'application",
-        "EPG_NOTE": "Actuellement, l'EPG n'est disponible que dans la version Electron d'IPTVnator.",
+        "EPG_NOTE": "Actuellement, l'EPG n'est disponible que dans la version Electron d'iptvmate.",
         "EPG_NOTE_URL_TEXT": "Vérifiez-le ici",
         "IMPORT_EXPORT_DATA": "Importer/exporter des listes de lecture",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "Exportez ou importez des listes au format JSON utilisé dans l'application.",
@@ -253,7 +253,7 @@
     "NO": "Non",
     "MENU": {
         "OPEN": "Ouvrir le menu",
-        "SUPPORT_ARIA": "Soutenir IPTVnator sur GitHub",
+        "SUPPORT_ARIA": "Soutenir iptvmate sur GitHub",
         "SETTINGS": "Paramètres",
         "SETTINGS_ARIA": "Ouvrir les paramètres",
         "BUG_REPORT": "Signaler un bug",
@@ -263,10 +263,10 @@
         "SUPPORT_PROJECT": "Soutenir le projet"
     },
     "ABOUT": {
-        "TITLE": "À propos d'IPTVnator",
+        "TITLE": "À propos d'iptvmate",
         "DESCRIPTION": "Application lecteur IPTV multiplateforme avec de nombreuses fonctionnalités, comme la prise en charge des listes m3u et m3u8, les favoris, le guide TV, les archives TV/rattrapage et plus encore.",
         "VERSION": "Version",
-        "GITHUB_TOOLTIP": "Dépôt IPTVnator sur GitHub",
+        "GITHUB_TOOLTIP": "Dépôt iptvmate sur GitHub",
         "BUY_ME_A_COFFEE_TOOLTIP": "Offrez-moi un café",
         "TWITTER_TOOLTIP": "Partager sur Twitter"
     },
@@ -382,7 +382,7 @@
         "TITLE": "Télécommande",
         "UP_CHANNEL": "Chaîne précédente",
         "DOWN_CHANNEL": "Chaîne suivante",
-        "HEADER": "Télécommande IPTVNator",
-        "FOOTER": "Télécommande IPTVNator"
+        "HEADER": "Télécommande iptvmate",
+        "FOOTER": "Télécommande iptvmate"
     }
 }

@@ -44,7 +44,7 @@
     },
     "HOME": {
         "SUBTITLE": "Wählen Sie eine Playlist aus oder laden Sie eine neue Playlist hoch",
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "FILE_UPLOAD": {
             "CHOOSE_PLAYLIST": "Playlist auswählen",
             "DRAG_DROP": "Ziehen Sie Dateien per Drag & Drop",
@@ -58,7 +58,7 @@
             "ADD_FIRST": "Bitte fügen Sie eine neue Playlist hinzu",
             "CHANNELS": "TV-Sender",
             "NO_PLAYLISTS": "Noch keine Playlisten hinzugefügt",
-            "WELCOME_TITLE": "Willkommen bei IPTVnator",
+            "WELCOME_TITLE": "Willkommen bei iptvmate",
             "WELCOME_DESCRIPTION": "Beginnen Sie Ihre Streaming-Reise, indem Sie Ihre erste Playlist hinzufügen. Verbinden Sie sich mit Ihrem bevorzugten IPTV-Dienst und genießen Sie Live-TV, Filme und Serien.",
             "ADD_YOUR_FIRST": "Ihre erste Playlist hinzufügen",
             "FEATURE_M3U": "M3U/M3U8-Dateien",
@@ -231,7 +231,7 @@
         "VLC_PLAYER_PATH_LABEL": "VLC-Pfad",
         "VLC_PLAYER_PATH_DESCRIPTION": "Legen Sie den Pfad zum VLC-Player in Ihrem System fest. \nEs wird der bereitgestellte Pfad zu einer VLC-Binärdatei anstelle des Standardpfads für unser System verwendet.",
         "THEME_DESCRIPTION": "Wählen Sie das visuelle Thema der Anwendung aus",
-        "EPG_NOTE": "Derzeit ist EPG nur in der Electron-basierten Version von IPTVnator verfügbar.",
+        "EPG_NOTE": "Derzeit ist EPG nur in der Electron-basierten Version von iptvmate verfügbar.",
         "VLC_PLAYER_PATH": "VLC-Playerpfad",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "Exportieren oder importieren Sie Wiedergabelisten im JSON-Format, das in der Anwendung verwendet wird.",
         "EPG_NOTE_URL_TEXT": "Überprüfen Sie es hier",
@@ -262,7 +262,7 @@
     "YES": "Ja",
     "MENU": {
         "OPEN": "Menü öffnen",
-        "SUPPORT_ARIA": "IPTVnator auf GitHub unterstützen",
+        "SUPPORT_ARIA": "iptvmate auf GitHub unterstützen",
         "SETTINGS": "Einstellungen",
         "SETTINGS_ARIA": "Einstellungen öffnen",
         "BUG_REPORT": "Fehler melden",
@@ -388,7 +388,7 @@
         }
     },
     "ABOUT": {
-        "TITLE": "Über IPTVnator",
+        "TITLE": "Über iptvmate",
         "DESCRIPTION": "Plattformübergreifende IPTV-Player-Anwendung mit mehreren Funktionen wie Unterstützung von M3U- und M3U8-Wiedergabelisten, Favoriten, TV-Guide, TV-Archiv/Catchup und mehr.",
         "VERSION": "Version",
         "TWITTER_TOOLTIP": "Auf Twitter teilen",
@@ -426,7 +426,7 @@
         "TITLE": "Fernbedienung",
         "UP_CHANNEL": "Sender aufwärts",
         "DOWN_CHANNEL": "Sender abwärts",
-        "HEADER": "IPTVNator Fernbedienung",
-        "FOOTER": "IPTVNator Fernbedienung"
+        "HEADER": "iptvmate Fernbedienung",
+        "FOOTER": "iptvmate Fernbedienung"
     }
 }

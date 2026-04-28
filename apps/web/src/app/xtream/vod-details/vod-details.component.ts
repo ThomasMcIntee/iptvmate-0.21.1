@@ -16,7 +16,7 @@ import {
     getVodNumericId,
 } from 'shared-interfaces';
 import { DownloadsService } from '../../services/downloads.service';
-import { SafePipe } from '@iptvnator/pipes';
+import { SafePipe } from '@iptvmate/pipes';
 import { StalkerStore } from '../../stalker/stalker.store';
 
 /**

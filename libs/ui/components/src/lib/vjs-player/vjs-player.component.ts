@@ -30,9 +30,9 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
     /** DOM-element reference */
     @ViewChild('target', { static: true }) target!: ElementRef<Element>;
     /** Options of VideoJs player */
-    @Input() options!: any;
+    @Input() options!: videoJs.PlayerOptions;
     /** VideoJs object */
-    player!: any;
+    player!: videoJs.Player;
     @Input() volume = 1;
     @Input() startTime = 0;
     @Output() timeUpdate = new EventEmitter<{
@@ -77,8 +77,13 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
             }
         );
         try {
-            if (typeof this.player.qualitySelectorHls === 'function') {
-                this.player.qualitySelectorHls({
+            const playerWithQualitySelector = this.player as videoJs.Player & {
+                qualitySelectorHls?: (options: {
+                    displayCurrentQuality: boolean;
+                }) => void;
+            };
+            if (typeof playerWithQualitySelector.qualitySelectorHls === 'function') {
+                playerWithQualitySelector.qualitySelectorHls({
                     displayCurrentQuality: true,
                 });
             }
@@ -86,8 +91,11 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
             console.warn('qualitySelectorHls plugin failed to initialize:', e);
         }
         try {
-            if (typeof this.player['aspectRatioPanel'] === 'function') {
-                this.player['aspectRatioPanel']();
+            const playerWithAspectPanel = this.player as videoJs.Player & {
+                aspectRatioPanel?: () => void;
+            };
+            if (typeof playerWithAspectPanel.aspectRatioPanel === 'function') {
+                playerWithAspectPanel.aspectRatioPanel();
             }
         } catch (e) {
             console.warn('aspectRatioPanel plugin failed to initialize:', e);

@@ -2,7 +2,7 @@
     "CLOSE": "Zamknij",
     "PLAYLISTS": "Listy odtwarzania",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "Wybierz listę odtwarzania z listy lub dodaj nową listę odtwarzania",
         "TABS": {
             "RECENTLY_ADDED": "Ostatnio dodane listy odtwarzania",
@@ -130,7 +130,7 @@
         "THEME_DESCRIPTION": "Wybierz motyw wizualny aplikacji",
         "SHOW_CAPTIONS_DESCRIPTION": "Domyślnie pokaż lub ukryj napisy",
         "VERSION_DESCRIPTION": "Aktualna wersja aplikacji",
-        "EPG_NOTE": "Obecnie EPG jest dostępne tylko w wersji IPTVnator opartej na Electron.",
+        "EPG_NOTE": "Obecnie EPG jest dostępne tylko w wersji iptvmate opartej na Electron.",
         "EPG_NOTE_URL_TEXT": "Sprawdź tutaj",
         "IMPORT_EXPORT_DATA": "Import/eksport list odtwarzania",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "Eksportuj lub importuj listy odtwarzania w formacie JSON używanym w aplikacji.",
@@ -231,7 +231,7 @@
     "NO": "Nie",
     "MENU": {
         "OPEN": "Otwórz menu",
-        "SUPPORT_ARIA": "Wsparcie IPTVnator na GitHubie",
+        "SUPPORT_ARIA": "Wsparcie iptvmate na GitHubie",
         "SETTINGS": "Ustawienia",
         "SETTINGS_ARIA": "Otwórz ustawienia",
         "BUG_REPORT": "Zgłoś błąd",
@@ -241,7 +241,7 @@
         "SUPPORT_PROJECT": "Wesprzyj projekt"
     },
     "ABOUT": {
-        "TITLE": "O IPTVnator",
+        "TITLE": "O iptvmate",
         "DESCRIPTION": "Wieloplatformowa aplikacja do odtwarzania IPTV z wieloma funkcjami, takimi jak obsługa list odtwarzania m3u i m3u8, ulubione, przewodnik TV, archiwum TV/catchup i inne.",
         "VERSION": "Wersja",
         "GITHUB_TOOLTIP": "Repozytorium ITPVnator na GitHubie",
@@ -317,7 +317,7 @@
         "TITLE": "Zdalne sterowanie",
         "UP_CHANNEL": "Kanał w górę",
         "DOWN_CHANNEL": "Kanał w dół",
-        "HEADER": "Zdalne sterowanie IPTVNator",
-        "FOOTER": "Zdalne sterowanie IPTVNator"
+        "HEADER": "Zdalne sterowanie iptvmate",
+        "FOOTER": "Zdalne sterowanie iptvmate"
     }
 }

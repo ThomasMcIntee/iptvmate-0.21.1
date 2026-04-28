@@ -2,7 +2,7 @@
     "CLOSE": "Закрыць",
     "PLAYLISTS": "Плэйлісты",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "Выберыце плэйліст са спісу, дадайце новы з камп'ютара або загрузіце па спасылцы",
         "TABS": {
             "RECENTLY_ADDED": "Нядаўна дададзеныя плэйлісты",
@@ -137,7 +137,7 @@
         "THEME_DESCRIPTION": "Выбраць візуальную тэму афармлення",
         "SHOW_CAPTIONS_DESCRIPTION": "Паказаць або схаваць субтытры па змаўчанні.",
         "VERSION_DESCRIPTION": "Бягучая версія праграмы",
-        "EPG_NOTE": "На гэты момант EPG даступны толькі ў натыўнай версіі IPTVnator.",
+        "EPG_NOTE": "На гэты момант EPG даступны толькі ў натыўнай версіі iptvmate.",
         "EPG_NOTE_URL_TEXT": "Падрабязней тут",
         "IMPORT_EXPORT_DATA": "Імпарт/экспарт плэйлістоў",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "Экспарт або імпарт плэйлістоў у фармаце JSON, які выкарыстоўваецца ў праграме.",
@@ -207,7 +207,7 @@
     "YES": "Так",
     "MENU": {
         "OPEN": "Адкрыць меню",
-        "SUPPORT_ARIA": "Падтрымаць IPTVnator на GitHub",
+        "SUPPORT_ARIA": "Падтрымаць iptvmate на GitHub",
         "SETTINGS": "Налады",
         "SETTINGS_ARIA": "Адкрыць налады",
         "BUG_REPORT": "Паведаміць аб памылцы",

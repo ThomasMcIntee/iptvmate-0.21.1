@@ -2,7 +2,7 @@
     "CLOSE": "Close",
     "PLAYLISTS": "Playlists",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "Please select a playlist from the list or add a new playlist",
         "TABS": {
             "RECENTLY_ADDED": "Recently added playlists",
@@ -15,7 +15,7 @@
         "PLAYLISTS": {
             "NO_PLAYLISTS": "No playlists were added",
             "ADD_FIRST": "Please add your first playlist",
-            "WELCOME_TITLE": "Welcome to IPTVnator",
+            "WELCOME_TITLE": "Welcome to iptvmate",
             "WELCOME_DESCRIPTION": "Start your streaming journey by adding your first playlist. Connect to your favorite IPTV service and enjoy live TV, movies, and series.",
             "ADD_YOUR_FIRST": "Add Your First Playlist",
             "FEATURE_M3U": "M3U/M3U8 Files",
@@ -173,7 +173,7 @@
         "THEME_DESCRIPTION": "Select visual theme of the application",
         "SHOW_CAPTIONS_DESCRIPTION": "Show or hide subtitles by default",
         "VERSION_DESCRIPTION": "Current version of the application",
-        "EPG_NOTE": "Currently EPG is available only in the electron-based version of IPTVnator.",
+        "EPG_NOTE": "Currently EPG is available only in the electron-based version of iptvmate.",
         "EPG_NOTE_URL_TEXT": "Check it here",
         "IMPORT_EXPORT_DATA": "Import/export playlists",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "Export or import playlists in the JSON format used within the application.",
@@ -302,7 +302,7 @@
     "NO": "No",
     "MENU": {
         "OPEN": "Open menu",
-        "SUPPORT_ARIA": "Support IPTVnator on GitHub",
+        "SUPPORT_ARIA": "Support iptvmate on GitHub",
         "SETTINGS": "Settings",
         "SETTINGS_ARIA": "Open settings",
         "BUG_REPORT": "Report a bug",
@@ -312,7 +312,7 @@
         "SUPPORT_PROJECT": "Support project"
     },
     "ABOUT": {
-        "TITLE": "About IPTVnator",
+        "TITLE": "About iptvmate",
         "DESCRIPTION": "Cross-platform IPTV player application with multiple features, such as support of m3u and m3u8 playlists, favorites, TV guide, TV archive/catchup and more.",
         "VERSION": "Version",
         "GITHUB_TOOLTIP": "ITPVnator repository on GitHub",
@@ -488,7 +488,7 @@
         "SUBTITLE": "Control your IPTV player remotely",
         "UP_CHANNEL": "Channel Up",
         "DOWN_CHANNEL": "Channel Down",
-        "HEADER": "IPTVNator Remote Control",
-        "FOOTER": "IPTVNator Remote Control"
+        "HEADER": "iptvmate Remote Control",
+        "FOOTER": "iptvmate Remote Control"
     }
 }

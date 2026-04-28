@@ -1,7 +1,7 @@
 {
     "CLOSE": "Cerrar",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "Selecciona una lista de reproducción del listado o añade una nueva lista al cargar archivos o por una url",
         "TABS": {
             "RECENTLY_ADDED": "Listas añadidas recientemente",
@@ -13,7 +13,7 @@
         "PLAYLISTS": {
             "NO_PLAYLISTS": "No se añadieron listas de reproducción",
             "ADD_FIRST": "Por favor, añade tu primera lista de la otra pestaña",
-            "WELCOME_TITLE": "Bienvenido a IPTVnator",
+            "WELCOME_TITLE": "Bienvenido a iptvmate",
             "WELCOME_DESCRIPTION": "Comience su viaje de streaming agregando su primera lista de reproducción. Conéctese a su servicio IPTV favorito y disfrute de TV en vivo, películas y series.",
             "ADD_YOUR_FIRST": "Agregar su primera lista",
             "FEATURE_M3U": "Archivos M3U/M3U8",
@@ -127,7 +127,7 @@
         "VLC_PLAYER_PATH_LABEL": "ruta VLC",
         "VLC_PLAYER_PATH_DESCRIPTION": "Establezca la ruta al reproductor VLC en su sistema. \nUtilizará la ruta proporcionada a un binario VLC en lugar de la ruta predeterminada para nuestro sistema.",
         "THEME_DESCRIPTION": "Seleccione el tema visual de la aplicación.",
-        "EPG_NOTE": "Actualmente, EPG está disponible sólo en la versión electrónica de IPTVnator.",
+        "EPG_NOTE": "Actualmente, EPG está disponible sólo en la versión electrónica de iptvmate.",
         "VLC_PLAYER_PATH": "Ruta del reproductor VLC",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "Exporte o importe listas de reproducción en el formato JSON utilizado dentro de la aplicación.",
         "EPG_NOTE_URL_TEXT": "Compruébalo aquí",
@@ -202,7 +202,7 @@
     "NO": "No",
     "MENU": {
         "OPEN": "Abrir menú",
-        "SUPPORT_ARIA": "Apoyar IPTVnator en GitHub",
+        "SUPPORT_ARIA": "Apoyar iptvmate en GitHub",
         "SETTINGS": "Ajustes",
         "SETTINGS_ARIA": "Abrir ajustes",
         "BUG_REPORT": "Reportar un  bug",
@@ -278,7 +278,7 @@
         }
     },
     "ABOUT": {
-        "TITLE": "Acerca de IPTVnator",
+        "TITLE": "Acerca de iptvmate",
         "VERSION": "Versión",
         "TWITTER_TOOLTIP": "Compartir en Twitter",
         "GITHUB_TOOLTIP": "Repositorio ITPVnator en GitHub",

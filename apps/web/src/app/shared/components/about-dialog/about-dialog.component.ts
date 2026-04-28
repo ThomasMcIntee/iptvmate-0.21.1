@@ -17,7 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
             <p>{{ 'ABOUT.VERSION' | translate }}: {{ appVersion }}</p>
             <p>
                 <a
-                    href="https://github.com/4gray/iptvnator"
+                    href="https://github.com/4gray/iptvmate"
                     target="_blank"
                     [title]="'ABOUT.GITHUB_TOOLTIP' | translate"
                     [attr.aria-label]="'ABOUT.GITHUB_TOOLTIP' | translate"
@@ -27,7 +27,7 @@ import { TranslateModule } from '@ngx-translate/core';
                         alt="GitHub" /></a
                 >&nbsp;
                 <a
-                    href="http://twitter.com/share?text=IPTVnator &mdash; free cross-platform IPTV player. Available as PWA and as native application.&url=https://github.com/4gray/iptvnator&hashtags=iptv,m3u,video-player"
+                    href="http://twitter.com/share?text=iptvmate &mdash; free cross-platform IPTV player. Available as PWA and as native application.&url=https://github.com/4gray/iptvmate&hashtags=iptv,m3u,video-player"
                     [title]="'ABOUT.TWITTER_TOOLTIP' | translate"
                 >
                     <img

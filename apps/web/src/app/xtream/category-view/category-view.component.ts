@@ -1,7 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { FilterPipe } from '@iptvnator/pipes';
+import { FilterPipe } from '@iptvmate/pipes';
 import { TranslatePipe } from '@ngx-translate/core';
 import { XtreamCategory } from 'shared-interfaces';
 import { PlaylistErrorViewComponent } from '../playlist-error-view/playlist-error-view.component';

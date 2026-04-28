@@ -15,7 +15,7 @@ import { DownloadsService } from '../../services/downloads.service';
 import { createLogger } from '../../shared/utils/logger';
 
 type EpisodeViewMode = 'grid' | 'list';
-const EPISODE_VIEW_MODE_KEY = 'iptvnator_episode_view_mode';
+const EPISODE_VIEW_MODE_KEY = 'iptvmate_episode_view_mode';
 
 @Component({
     selector: 'app-season-container',

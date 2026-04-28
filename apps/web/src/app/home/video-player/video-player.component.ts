@@ -61,6 +61,7 @@ import {
     getChannelItemByNumber,
 } from '../../shared/services/remote-channel-navigation.util';
 import { SettingsComponent } from '../../settings/settings.component';
+import { getExtensionFromUrl } from 'm3u-utils';
 
 @Component({
     imports: [
@@ -557,5 +558,34 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
                 muted: this.volume === 0,
             });
         }
+    }
+
+    getVjsOptions(channel: Channel): {
+        sources: Array<{ src: string; type?: string }>;
+    } {
+        const sourceUrl = channel.url + (channel.epgParams || '');
+        const extension = getExtensionFromUrl(channel.url)?.toLowerCase();
+
+        if (extension === 'm3u8' || extension === 'm3u') {
+            return {
+                sources: [{ src: sourceUrl, type: 'application/x-mpegURL' }],
+            };
+        }
+
+        if (extension === 'ts') {
+            return {
+                sources: [{ src: sourceUrl, type: 'video/mp2t' }],
+            };
+        }
+
+        if (extension === 'mp4') {
+            return {
+                sources: [{ src: sourceUrl, type: 'video/mp4' }],
+            };
+        }
+
+        return {
+            sources: [{ src: sourceUrl }],
+        };
     }
 }

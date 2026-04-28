@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, screen, shell } from 'electron';
+import { app, BrowserWindow, Menu, screen, session, shell } from 'electron';
 import { join } from 'path';
 import { rendererAppName, rendererAppPort } from './constants';
 import { store, WINDOW_BOUNDS } from './services/store.service';
@@ -46,6 +46,13 @@ export default class App {
         // This method will be called when Electron has finished
         // initialization and is ready to create browser windows.
         // Some APIs can only be used after this event occurs.
+
+        // Allow IPTV stream servers with non-standard TLS configurations
+        // (e.g. outdated cipher suites) by bypassing certificate verification.
+        session.defaultSession.setCertificateVerifyProc((_request, callback) => {
+            callback(0); // 0 = success, bypass certificate errors
+        });
+
         if (rendererAppName) {
             App.initMainWindow();
             App.loadMainWindow();
@@ -69,7 +76,7 @@ export default class App {
 
         // Create the browser window.
         App.mainWindow = new BrowserWindow({
-            title: 'IPTVnator',
+            title: 'iptvmate',
             width: width,
             height: height,
             show: false,

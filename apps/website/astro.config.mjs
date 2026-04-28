@@ -7,7 +7,7 @@ import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://4gray.github.io',
-  base: '/iptvnator',
+  base: '/iptvmate',
   outDir: '../../dist/apps/website',
   integrations: [tailwind(), sitemap(), mdx()],
 });

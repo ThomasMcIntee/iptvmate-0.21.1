@@ -17,7 +17,7 @@ import { XtreamVodDetails } from 'shared-interfaces';
 import { DownloadsService } from '../../services/downloads.service';
 import { SettingsStore } from '../../services/settings-store.service';
 import { XtreamStore } from '../stores/xtream.store';
-import { SafePipe } from '@iptvnator/pipes';
+import { SafePipe } from '@iptvmate/pipes';
 import { createLogger } from '../../shared/utils/logger';
 
 /**

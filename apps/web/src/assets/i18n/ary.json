@@ -2,7 +2,7 @@
     "CLOSE": "سد",
     "PLAYLISTS": "قوائم التشغيل",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "عفاك اختار شي قائمة تشغيل من الليستا ولا زيد قائمة جديدة",
         "TABS": {
             "RECENTLY_ADDED": "قوائم التشغيل اللي تزادو مؤخراً",
@@ -130,7 +130,7 @@
         "THEME_DESCRIPTION": "اختار المظهر المرئي للتطبيق",
         "SHOW_CAPTIONS_DESCRIPTION": "وري ولا خفي الترجمة افتراضياً",
         "VERSION_DESCRIPTION": "الإصدار الحالي ديال التطبيق",
-        "EPG_NOTE": "EPG متوفر حالياً غير في الإصدار اللي مبني على electron ديال IPTVnator.",
+        "EPG_NOTE": "EPG متوفر حالياً غير في الإصدار اللي مبني على electron ديال iptvmate.",
         "EPG_NOTE_URL_TEXT": "شوف هنا",
         "IMPORT_EXPORT_DATA": "استورد/صدّر قوائم التشغيل",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "صدّر ولا استورد قوائم التشغيل بصيغة JSON اللي كيستعملها التطبيق.",
@@ -231,7 +231,7 @@
     "NO": "لا",
     "MENU": {
         "OPEN": "حل القائمة",
-        "SUPPORT_ARIA": "دعم IPTVnator على GitHub",
+        "SUPPORT_ARIA": "دعم iptvmate على GitHub",
         "SETTINGS": "الإعدادات",
         "SETTINGS_ARIA": "حل الإعدادات",
         "BUG_REPORT": "بلغ على شي مشكل",
@@ -241,10 +241,10 @@
         "SUPPORT_PROJECT": "دعم المشروع"
     },
     "ABOUT": {
-        "TITLE": "حول IPTVnator",
+        "TITLE": "حول iptvmate",
         "DESCRIPTION": "تطبيق مشغل IPTV متعدد المنصات فيه بزاف ديال الميزات، بحال دعم قوائم تشغيل m3u و m3u8، المفضلة، دليل التلفزيون، الأرشيف التلفزيوني/الإعادة والمزيد.",
         "VERSION": "الإصدار",
-        "GITHUB_TOOLTIP": "مستودع IPTVnator على GitHub",
+        "GITHUB_TOOLTIP": "مستودع iptvmate على GitHub",
         "BUY_ME_A_COFFEE_TOOLTIP": "شري ليا قهوة",
         "TWITTER_TOOLTIP": "شارك على تويتر"
     },
@@ -317,7 +317,7 @@
         "TITLE": "التحكم عن بعد",
         "UP_CHANNEL": "القناة الفوق",
         "DOWN_CHANNEL": "القناة لتحت",
-        "HEADER": "التحكم عن بعد IPTVNator",
-        "FOOTER": "التحكم عن بعد IPTVNator"
+        "HEADER": "التحكم عن بعد iptvmate",
+        "FOOTER": "التحكم عن بعد iptvmate"
     }
 }

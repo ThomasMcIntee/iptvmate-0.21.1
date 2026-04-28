@@ -2,7 +2,7 @@
     "CLOSE": "إغلاق",
     "PLAYLISTS": "قوائم التشغيل",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "يرجى اختيار قائمة تشغيل من القائمة أو إضافة قائمة جديدة",
         "TABS": {
             "RECENTLY_ADDED": "قوائم التشغيل المضافة مؤخرًا",
@@ -15,7 +15,7 @@
         "PLAYLISTS": {
             "NO_PLAYLISTS": "لم تُضف أي قوائم تشغيل",
             "ADD_FIRST": "يرجى إضافة أول قائمة تشغيل",
-            "WELCOME_TITLE": "مرحبًا بك في IPTVnator",
+            "WELCOME_TITLE": "مرحبًا بك في iptvmate",
             "WELCOME_DESCRIPTION": "ابدأ رحلة البث بإضافة قائمة التشغيل الأولى. اتصل بخدمة IPTV المفضلة لديك واستمتع بالتلفزيون المباشر والأفلام والمسلسلات.",
             "ADD_YOUR_FIRST": "أضف قائمة التشغيل الأولى",
             "FEATURE_M3U": "ملفات M3U/M3U8",
@@ -239,7 +239,7 @@
     "NO": "لا",
     "MENU": {
         "OPEN": "فتح القائمة",
-        "SUPPORT_ARIA": "دعم IPTVnator على GitHub",
+        "SUPPORT_ARIA": "دعم iptvmate على GitHub",
         "SETTINGS": "الإعدادات",
         "SETTINGS_ARIA": "فتح الإعدادات",
         "BUG_REPORT": "ابلاغ عن خلل",
@@ -249,10 +249,10 @@
         "SUPPORT_PROJECT": "دعم المشروع"
     },
     "ABOUT": {
-        "TITLE": "حول IPTVnator",
+        "TITLE": "حول iptvmate",
         "DESCRIPTION": "تطبيق مشغل IPTV متعدد المنصات مع ميزات مثل دعم قوائم M3U/M3U8، المفضلة، الدليل التلفزيوني، الأرشيف، والمزيد.",
         "VERSION": "الإصدار",
-        "GITHUB_TOOLTIP": "مستودع IPTVnator على GitHub",
+        "GITHUB_TOOLTIP": "مستودع iptvmate على GitHub",
         "BUY_ME_A_COFFEE_TOOLTIP": "اشتري لي قهوة",
         "TWITTER_TOOLTIP": "مشاركة على تويتر"
     },
@@ -325,7 +325,7 @@
         "TITLE": "التحكم عن بعد",
         "UP_CHANNEL": "القناة السابقة",
         "DOWN_CHANNEL": "القناة التالية",
-        "HEADER": "التحكم عن بعد في IPTVNator",
-        "FOOTER": "التحكم عن بعد في IPTVNator"
+        "HEADER": "التحكم عن بعد في iptvmate",
+        "FOOTER": "التحكم عن بعد في iptvmate"
     }
 }

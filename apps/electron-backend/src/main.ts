@@ -1,7 +1,11 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import fixPath from 'fix-path';
 import App from './app/app';
 import { initDatabase } from './app/database/connection';
+import {
+    getStreamProxyPort,
+    startStreamProxy,
+} from './app/services/stream-proxy.service';
 import DatabaseEvents from './app/events/database.events';
 import {
     resetStaleDownloads,
@@ -18,7 +22,32 @@ import SquirrelEvents from './app/events/squirrel.events';
 import StalkerEvents from './app/events/stalker.events';
 import XtreamEvents from './app/events/xtream.events';
 
-app.setName('iptvnator');
+app.setName('iptvmate');
+
+// Allow IPTV stream servers with outdated TLS versions/cipher suites
+app.commandLine.appendSwitch('ignore-certificate-errors');
+app.commandLine.appendSwitch('ignore-ssl-errors');
+app.commandLine.appendSwitch('ssl-version-min', 'tls1');
+
+let streamProxyStartPromise: Promise<number> | null = null;
+
+async function ensureStreamProxyStarted(): Promise<number> {
+    if (streamProxyStartPromise) {
+        return streamProxyStartPromise;
+    }
+
+    streamProxyStartPromise = startStreamProxy();
+    return streamProxyStartPromise;
+}
+
+// Register early to avoid renderer/main startup race.
+ipcMain.handle('GET_STREAM_PROXY_PORT', async () => {
+    if (!getStreamProxyPort()) {
+        await ensureStreamProxyStarted();
+    }
+
+    return getStreamProxyPort();
+});
 
 export default class Main {
     static initialize() {
@@ -33,6 +62,9 @@ export default class Main {
     }
 
     static async bootstrapAppEvents() {
+        // Start stream proxy before other init so the port is available immediately
+        await ensureStreamProxyStarted();
+
         // Initialize database before other events
         await initDatabase();
 

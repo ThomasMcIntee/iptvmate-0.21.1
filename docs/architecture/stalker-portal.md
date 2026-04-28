@@ -1,6 +1,6 @@
 # Stalker Portal Architecture
 
-This document describes the Stalker portal implementation in IPTVnator and where each feature is integrated.
+This document describes the Stalker portal implementation in iptvmate and where each feature is integrated.
 
 ## Related Docs
 
@@ -25,7 +25,7 @@ Stalker support covers:
 
 ## Routing Structure
 
-Primary route tree lives in `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker.routes.ts`.
+Primary route tree lives in `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker.routes.ts`.
 
 - `/stalker/:id/vod`
 - `/stalker/:id/series`
@@ -40,28 +40,28 @@ Primary route tree lives in `/Users/4gray/Code/iptvnator/apps/web/src/app/stalke
 1. Angular Stalker screens call methods/resources in `StalkerStore`.
 2. `StalkerStore` builds request params based on selected content type and current view state.
 3. Requests go through `DataService.sendIpcEvent(STALKER_REQUEST, ...)` or `StalkerSessionService` (full portal auth).
-4. Electron main process handles `STALKER_REQUEST` in `/Users/4gray/Code/iptvnator/apps/electron-backend/src/app/events/stalker.events.ts`.
+4. Electron main process handles `STALKER_REQUEST` in `/Users/4gray/Code/iptvmate/apps/electron-backend/src/app/events/stalker.events.ts`.
 5. Axios calls Stalker `load.php` API with required headers/cookies and returns normalized payloads to renderer.
 
 ## Main UI Components
 
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-main-container.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-main-container.component.ts`
   - Category + content layout for `vod` and `series`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-live-stream-layout/stalker-live-stream-layout.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-live-stream-layout/stalker-live-stream-layout.component.ts`
   - ITV live playback, channel navigation, EPG panel integration
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-series-view/stalker-series-view.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-series-view/stalker-series-view.component.ts`
   - Season/episode UI for all Stalker series modes
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-favorites/stalker-favorites.component.ts`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/recently-viewed/recently-viewed.component.ts`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-search/stalker-search.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-favorites/stalker-favorites.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/recently-viewed/recently-viewed.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-search/stalker-search.component.ts`
 
 ## Store and Data Flow
 
 Stalker store is now feature-composed:
 
-- Facade: `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker.store.ts`
-- Feature slices: `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stores/features/*`
-- Shared store utils: `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stores/utils/*`
+- Facade: `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker.store.ts`
+- Feature slices: `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stores/features/*`
+- Shared store utils: `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stores/utils/*`
 
 Important store responsibilities:
 
@@ -93,8 +93,8 @@ Stalker has multiple real-world data shapes. The current implementation supports
 
 Core decision logic and normalization are centralized in:
 
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-vod.utils.ts`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/models/*.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-vod.utils.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/models/*.ts`
 
 ## Favorites and Recently Viewed
 
@@ -109,16 +109,16 @@ Current implementation is shared via Stalker-specific helpers:
 
 Where this is used:
 
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-favorites/stalker-favorites.component.ts`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/recently-viewed/recently-viewed.component.ts`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-search/stalker-search.component.ts`
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/favorites-button/favorites-button.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-favorites/stalker-favorites.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/recently-viewed/recently-viewed.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-search/stalker-search.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/favorites-button/favorites-button.component.ts`
 
 ## Remote Control Integration
 
 Stalker live remote control is implemented in:
 
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-live-stream-layout/stalker-live-stream-layout.component.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-live-stream-layout/stalker-live-stream-layout.component.ts`
 
 Supported today:
 
@@ -147,7 +147,7 @@ This reduces duplicate UI logic across portal types and keeps compatibility beha
 
 Focused regression tests for Stalker VOD mode branching live in:
 
-- `/Users/4gray/Code/iptvnator/apps/web/src/app/stalker/stalker-vod.utils.spec.ts`
+- `/Users/4gray/Code/iptvmate/apps/web/src/app/stalker/stalker-vod.utils.spec.ts`
 
 Covered scenarios include:
 

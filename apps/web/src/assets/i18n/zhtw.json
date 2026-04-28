@@ -2,7 +2,7 @@
     "CLOSE": "關閉",
     "PLAYLISTS": "播放清單",
     "HOME": {
-        "TITLE": "IPTVnator",
+        "TITLE": "iptvmate",
         "SUBTITLE": "請從列表中選擇一個播放清單，或透過檔案上傳或網址新增新播放清單",
         "TABS": {
             "RECENTLY_ADDED": "最近新增的播放清單",
@@ -15,7 +15,7 @@
         "PLAYLISTS": {
             "NO_PLAYLISTS": "尚未新增播放清單",
             "ADD_FIRST": "請從其他分頁新增您的第一個播放清單",
-            "WELCOME_TITLE": "歡迎使用 IPTVnator",
+            "WELCOME_TITLE": "歡迎使用 iptvmate",
             "WELCOME_DESCRIPTION": "透過新增您的第一個播放清單開始串流之旅。連接您喜愛的 IPTV 服務，享受直播電視、電影和影集。",
             "ADD_YOUR_FIRST": "新增您的第一個播放清單",
             "FEATURE_M3U": "M3U/M3U8 檔案",
@@ -135,7 +135,7 @@
         "THEME_DESCRIPTION": "選擇應用程式視覺主題",
         "SHOW_CAPTIONS_DESCRIPTION": "預設顯示或隱藏字幕",
         "VERSION_DESCRIPTION": "應用程式目前版本",
-        "EPG_NOTE": "目前僅在 Electron 版的 IPTVnator 中提供 EPG。",
+        "EPG_NOTE": "目前僅在 Electron 版的 iptvmate 中提供 EPG。",
         "EPG_NOTE_URL_TEXT": "在此處查看",
         "IMPORT_EXPORT_DATA": "匯入/匯出播放清單",
         "IMPORT_EXPORT_DATA_DESCRIPTION": "以應用程式內使用的 JSON 格式匯出或匯入播放清單。",
@@ -230,7 +230,7 @@
     "NO": "否",
     "MENU": {
         "OPEN": "開啟選單",
-        "SUPPORT_ARIA": "在 GitHub 上支持 IPTVnator",
+        "SUPPORT_ARIA": "在 GitHub 上支持 iptvmate",
         "SETTINGS": "設定",
         "SETTINGS_ARIA": "開啟設定",
         "BUG_REPORT": "回報問題",
@@ -240,7 +240,7 @@
         "SUPPORT_PROJECT": "支持專案"
     },
     "ABOUT": {
-        "TITLE": "關於 IPTVnator",
+        "TITLE": "關於 iptvmate",
         "DESCRIPTION": "跨平台 IPTV 播放器，具有多種功能，如支援 m3u 和 m3u8 播放清單、我的最愛、電視指南、電視節目存檔/回看等。",
         "VERSION": "版本",
         "GITHUB_TOOLTIP": "ITPVnator 的 GitHub 專案",
@@ -335,7 +335,7 @@
         "TITLE": "遠端控制",
         "UP_CHANNEL": "上一頻道",
         "DOWN_CHANNEL": "下一頻道",
-        "HEADER": "IPTVNator 遠端控制",
-        "FOOTER": "IPTVNator 遠端控制"
+        "HEADER": "iptvmate 遠端控制",
+        "FOOTER": "iptvmate 遠端控制"
     }
 }

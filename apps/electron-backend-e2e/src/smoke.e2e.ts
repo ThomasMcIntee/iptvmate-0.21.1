@@ -125,7 +125,7 @@ test.describe('Electron App Smoke Test', () => {
 
         const title = await mainWindow.title();
         console.log(`Window title: ${title}`);
-        expect(title).toContain('IPTVnator');
+        expect(title).toContain('iptvmate');
     });
 
     test('app should have expected window properties', async () => {

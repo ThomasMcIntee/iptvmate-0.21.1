@@ -1,6 +1,6 @@
 {
-    "appId": "com.fourgray.iptvnator",
-    "productName": "IPTVnator",
+    "appId": "com.fourgray.iptvmate",
+    "productName": "iptvmate",
     "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
     "directories": {
         "buildResources": "dist/apps",

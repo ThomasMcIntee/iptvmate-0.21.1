@@ -13,7 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
-import { FilterPipe } from '@iptvnator/pipes';
+import { FilterPipe } from '@iptvmate/pipes';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResizableDirective } from 'components';
 import { EpgItem, VideoPlayer, XtreamItem } from 'shared-interfaces';

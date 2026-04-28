@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-IPTVnator is a cross-platform IPTV player application built with Angular and Electron, supporting M3U/M3U8 playlists, Xtream Codes API, and Stalker portals.
+iptvmate is a cross-platform IPTV player application built with Angular and Electron, supporting M3U/M3U8 playlists, Xtream Codes API, and Stalker portals.
 
 **Dual Environment Support**: The application is designed to work in both Electron and as a Progressive Web App (PWA). The architecture uses a factory pattern to inject environment-specific services at runtime, ensuring the same codebase works in both contexts.
 
@@ -256,7 +256,7 @@ See `docs/architecture/m3u-playlist-module.md` for complete documentation.
 **Data Storage (Environment-Specific)**:
 
 - **Electron**: libSQL/SQLite database via Drizzle ORM
-    - Location: `~/.iptvnator/databases/iptvnator.db`
+    - Location: `~/.iptvmate/databases/iptvmate.db`
     - Full-featured relational database with foreign keys and indexes
     - Supports local file or remote Turso instance via env vars
 - **PWA (Web)**: IndexedDB via `ngx-indexed-db`
@@ -346,7 +346,7 @@ This project uses modern Angular signal-based APIs and patterns. **ALWAYS** use 
 **Database**:
 
 - **ORM**: Drizzle ORM with libSQL (local SQLite file or remote Turso)
-- **Location**: `~/.iptvnator/databases/iptvnator.db` (avoids spaces in path)
+- **Location**: `~/.iptvmate/databases/iptvmate.db` (avoids spaces in path)
 - **Schema** (`apps/electron-backend/src/app/database/schema.ts`):
     - `playlists` - Playlist metadata (M3U, Xtream, Stalker)
     - `categories` - Content categories (live, movies, series)
@@ -415,7 +415,7 @@ window.electron; // truthy in Electron, undefined in browser
 ```
 
 **Why Dual Mode?**
-IPTVnator supports both Electron (desktop app) and PWA (web browser) to provide flexibility:
+iptvmate supports both Electron (desktop app) and PWA (web browser) to provide flexibility:
 
 - **Electron**: Full-featured desktop experience with local database, external player support (MPV/VLC), and native file system access
 - **PWA**: Lightweight web version that runs in any browser without installation
@@ -425,7 +425,7 @@ IPTVnator supports both Electron (desktop app) and PWA (web browser) to provide 
 - `app.config.ts` - `DataFactory()` selects DataService implementation based on environment
 - `app.routes.ts` - Different routes for Xtream portals (Electron uses Tauri-based routes, PWA uses standard routes)
 - Storage layer switches automatically:
-    - Electron → libSQL/Drizzle ORM → `~/.iptvnator/databases/iptvnator.db`
+    - Electron → libSQL/Drizzle ORM → `~/.iptvmate/databases/iptvmate.db`
     - PWA → IndexedDB → Browser storage
 - External player support (MPV/VLC) only available in Electron
 - File system operations only available in Electron (uploading playlists from disk)

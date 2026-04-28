@@ -1,23 +1,23 @@
 # IPTVmate - IPTV Player Application
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/4gray/iptvnator/electron/src/assets/icons/favicon.256x256.png" alt="IPTVmate icon" title="Free IPTV player application" />
+  <img src="https://raw.githubusercontent.com/4gray/iptvmate/electron/src/assets/icons/favicon.256x256.png" alt="IPTVmate icon" title="Free IPTV player application" />
 </p>
 <p align="center">
-  <a href="https://github.com/4gray/iptvnator/releases"><img src="https://img.shields.io/github/release/4gray/iptvnator.svg?style=for-the-badge&logo=github" alt="Release"></a>
-  <a href="https://github.com/4gray/iptvnator/releases"><img src="https://img.shields.io/github/v/release/4gray/iptvnator?include_prereleases&label=pre-release&logo=github&style=for-the-badge" /></a>
- <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/4gray/iptvnator/build-and-test.yaml?style=for-the-badge&logo=github"> <a href="https://github.com/4gray/iptvnator/releases"><img src="https://img.shields.io/github/downloads/4gray/iptvnator/total?style=for-the-badge&logo=github" alt="Releases"></a> <a href="https://codecov.io/gh/4gray/iptvnator"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/4gray/iptvnator?style=for-the-badge"></a> <a href="https://t.me/iptvnator"><img src="https://img.shields.io/badge/telegram-iptvnator-blue?logo=telegram&style=for-the-badge" alt="Telegram"></a> <a href="https://bsky.app/profile/iptvnator.bsky.social"><img src="https://img.shields.io/badge/bluesky-iptvnator-darkblue?logo=bluesky&style=for-the-badge" alt="Bluesky"></a>
+  <a href="https://github.com/4gray/iptvmate/releases"><img src="https://img.shields.io/github/release/4gray/iptvmate.svg?style=for-the-badge&logo=github" alt="Release"></a>
+  <a href="https://github.com/4gray/iptvmate/releases"><img src="https://img.shields.io/github/v/release/4gray/iptvmate?include_prereleases&label=pre-release&logo=github&style=for-the-badge" /></a>
+ <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/4gray/iptvmate/build-and-test.yaml?style=for-the-badge&logo=github"> <a href="https://github.com/4gray/iptvmate/releases"><img src="https://img.shields.io/github/downloads/4gray/iptvmate/total?style=for-the-badge&logo=github" alt="Releases"></a> <a href="https://codecov.io/gh/4gray/iptvmate"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/4gray/iptvmate?style=for-the-badge"></a> <a href="https://t.me/iptvmate"><img src="https://img.shields.io/badge/telegram-iptvmate-blue?logo=telegram&style=for-the-badge" alt="Telegram"></a> <a href="https://bsky.app/profile/iptvmate.bsky.social"><img src="https://img.shields.io/badge/bluesky-iptvmate-darkblue?logo=bluesky&style=for-the-badge" alt="Bluesky"></a>
 </p>
 
-🌐 **[Website](https://4gray.github.io/iptvnator/)** | <a href="https://t.me/iptvnator">Telegram channel for discussions</a> | <a href="https://ko-fi.com/4gray" target="_blank">Buy me a coffee</a> | <a href="https://github.com/sponsors/4gray">GitHub Sponsors</a>
+🌐 **[Website](https://4gray.github.io/iptvmate/)** | <a href="https://t.me/iptvmate">Telegram channel for discussions</a> | <a href="https://ko-fi.com/4gray" target="_blank">Buy me a coffee</a> | <a href="https://github.com/sponsors/4gray">GitHub Sponsors</a>
 
-**IPTVnator** is a video player application that provides support for IPTV playlist playback (m3u, m3u8). The application allows users to import playlists using remote URLs or by uploading files from the local file system. Additionally, it supports EPG information in XMLTV format which can be provided via URL.
+**iptvmate** is a video player application that provides support for IPTV playlist playback (m3u, m3u8). The application allows users to import playlists using remote URLs or by uploading files from the local file system. Additionally, it supports EPG information in XMLTV format which can be provided via URL.
 
 The application is a cross-platform, open-source project built with Electron and Angular.
 
-⚠️ Note: IPTVnator does not provide any playlists or other digital content. The channels and pictures in the screenshots are for demonstration purposes only.
+⚠️ Note: iptvmate does not provide any playlists or other digital content. The channels and pictures in the screenshots are for demonstration purposes only.
 
-![IPTVnator: Channels list, player and epg list](./iptv-dark-theme.png)
+![iptvmate: Channels list, player and epg list](./iptv-dark-theme.png)
 
 ## Features
 
@@ -70,41 +70,41 @@ _Note: First version of the application which was developed as a PWA is availabl
 
 ## Download
 
-Download the latest version of the application for macOS, Windows, and Linux from the [release page](https://github.com/4gray/iptvnator/releases).
+Download the latest version of the application for macOS, Windows, and Linux from the [release page](https://github.com/4gray/iptvmate/releases).
 
 Alternatively, you can install the application using one of the following package managers:
 
 ### Homebrew
 
 ```shell
-$ brew install iptvnator
+$ brew install iptvmate
 ```
 
 ### Snap
 
 ```shell
-$ sudo snap install iptvnator
+$ sudo snap install iptvmate
 ```
 
 ### Arch
 
-Also available as an Arch PKG, [iptvnator-bin](https://aur.archlinux.org/packages/iptvnator-bin/), in the AUR (using your favourite AUR-helper, .e.g. `yay`)
+Also available as an Arch PKG, [iptvmate-bin](https://aur.archlinux.org/packages/iptvmate-bin/), in the AUR (using your favourite AUR-helper, .e.g. `yay`)
 
 ```shell
-$ yay -S iptvnator-bin
+$ yay -S iptvmate-bin
 ```
 
 ### Gentoo
 
-You can install IPTVnator from the [gentoo-zh overlay](https://github.com/microcai/gentoo-zh)
+You can install iptvmate from the [gentoo-zh overlay](https://github.com/microcai/gentoo-zh)
 
 ```shell
 sudo eselect repository enable gentoo-zh
 sudo emerge --sync gentoo-zh
-sudo emerge iptvnator-bin
+sudo emerge iptvmate-bin
 ```
 
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/iptvnator)
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/iptvmate)
 
 <a href="https://github.com/sponsors/4gray" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-green.png" alt="Buy Me A Coffee" width="185"></a>
 
@@ -115,18 +115,18 @@ sudo emerge iptvnator-bin
 Due to Apple's Gatekeeper security and code signing requirements, you may need to remove the quarantine flag from the downloaded application:
 
 ```bash
-xattr -c /Applications/IPTVnator.app
+xattr -c /Applications/iptvmate.app
 ```
 
 Alternatively, if the app is located in a different directory:
 
 ```bash
-xattr -c ~/Downloads/IPTVnator.app
+xattr -c ~/Downloads/iptvmate.app
 ```
 
 ### Linux: chrome-sandbox Issues
 
-If you encounter the following error when launching IPTVnator:
+If you encounter the following error when launching iptvmate:
 
 ```
 The SUID sandbox helper binary was found, but is not configured correctly.
@@ -136,7 +136,7 @@ You need to make sure that chrome-sandbox is owned by root and has mode 4755.
 
 **Solution 1: Fix chrome-sandbox permissions (Recommended for .deb/.rpm installations)**
 
-Navigate to the IPTVnator installation directory and run:
+Navigate to the iptvmate installation directory and run:
 
 ```bash
 sudo chown root:root chrome-sandbox
@@ -148,21 +148,21 @@ sudo chmod 4755 chrome-sandbox
 Edit the desktop launcher file to add the `--no-sandbox` flag:
 
 1. Find your desktop file location:
-   - **Ubuntu/Debian**: `~/.local/share/applications/iptvnator.desktop`
-   - **System-wide**: `/usr/share/applications/iptvnator.desktop`
+   - **Ubuntu/Debian**: `~/.local/share/applications/iptvmate.desktop`
+   - **System-wide**: `/usr/share/applications/iptvmate.desktop`
 
 2. Edit the file and modify the `Exec` line:
 
    ```
-   Exec=iptvnator --no-sandbox %U
+   Exec=iptvmate --no-sandbox %U
    ```
 
 3. Save the file and relaunch the application from your application menu.
 
-Alternatively, you can launch IPTVnator from the terminal with the flag:
+Alternatively, you can launch iptvmate from the terminal with the flag:
 
 ```bash
-iptvnator --no-sandbox
+iptvmate --no-sandbox
 ```
 
 ## How to Build and Develop
@@ -192,7 +192,7 @@ $ npm run serve:frontend
 
 ## Disclaimer
 
-**IPTVnator doesn't provide any playlists or other digital content.**
+**iptvmate doesn't provide any playlists or other digital content.**
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 

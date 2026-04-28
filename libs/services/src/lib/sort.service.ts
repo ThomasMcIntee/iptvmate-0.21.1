@@ -18,7 +18,7 @@ export interface SortOptions {
     order: SortOrder;
 }
 
-const SORT_OPTIONS_STORAGE_KEY = 'iptvnator-sort-options';
+const SORT_OPTIONS_STORAGE_KEY = 'iptvmate-sort-options';
 
 @Injectable({
     providedIn: 'root',

@@ -10,7 +10,7 @@
         [minWidth]="200"
         [maxWidth]="600"
         [defaultWidth]="350"
-        storageKey="iptvnator_video_sidebar_width"
+        storageKey="iptvmate_video_sidebar_width"
         handlePosition="right"
     >
         @defer {
@@ -42,16 +42,7 @@
                 <!-- video.js player -->
                 @if (playerSettings.player === 'videojs') {
                     <app-vjs-player
-                        [options]="{
-                            sources: [
-                                {
-                                    src:
-                                        activeChannel.url +
-                                        activeChannel.epgParams,
-                                    type: 'application/x-mpegURL',
-                                },
-                            ],
-                        }"
+                        [options]="getVjsOptions(activeChannel)"
                         [volume]="volume"
                         [class.hide-captions]="!playerSettings.showCaptions"
                     />
@@ -85,7 +76,7 @@
                                 style="cursor: pointer"
                                 (click)="
                                     openUrl(
-                                        'https://github.com/4gray/iptvnator/wiki/What-is-mpv-video-player-and-how-to-install-it-on-different-operating-systems%3F'
+                                        'https://github.com/4gray/iptvmate/wiki/What-is-mpv-video-player-and-how-to-install-it-on-different-operating-systems%3F'
                                     )
                                 "
                                 >Installation instructions</a

@@ -1,5 +1,5 @@
 {
-    "name": "@iptvnator/pipes",
+    "name": "@iptvmate/pipes",
     "$schema": "../../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/ui/pipes/src",
     "prefix": "lib",

@@ -1,6 +1,6 @@
 # Database
 
-Shared database library for IPTVnator providing Drizzle ORM schema and connection utilities.
+Shared database library for iptvmate providing Drizzle ORM schema and connection utilities.
 
 ## Usage
 
@@ -30,4 +30,4 @@ import { content, categories, playlists, type Content } from 'database';
 
 ## Database Location
 
-The SQLite database is stored at: `~/.iptvnator/databases/iptvnator.db`
+The SQLite database is stored at: `~/.iptvmate/databases/iptvmate.db`

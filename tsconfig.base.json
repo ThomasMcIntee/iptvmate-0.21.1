@@ -15,7 +15,7 @@
         "skipDefaultLibCheck": true,
         "baseUrl": ".",
         "paths": {
-            "@iptvnator/pipes": ["libs/ui/pipes/src/index.ts"],
+            "@iptvmate/pipes": ["libs/ui/pipes/src/index.ts"],
             "@package": ["./package.json"],
             "components": ["libs/ui/components/src/index.ts"],
             "m3u-state": ["libs/m3u-state/src/index.ts"],

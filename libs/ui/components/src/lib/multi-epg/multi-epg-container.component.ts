@@ -17,7 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { MomentDatePipe } from '@iptvnator/pipes';
+import { MomentDatePipe } from '@iptvmate/pipes';
 import { TranslatePipe } from '@ngx-translate/core';
 import { addDays, differenceInMinutes, format, parse, subDays } from 'date-fns';
 import { Observable, Subscription } from 'rxjs';

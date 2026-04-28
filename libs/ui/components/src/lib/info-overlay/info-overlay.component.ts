@@ -1,6 +1,6 @@
 import { NgStyle } from '@angular/common';
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { MomentDatePipe } from '@iptvnator/pipes';
+import { MomentDatePipe } from '@iptvmate/pipes';
 import { TranslatePipe } from '@ngx-translate/core';
 import moment from 'moment';
 import { Channel, EpgProgram } from 'shared-interfaces';
