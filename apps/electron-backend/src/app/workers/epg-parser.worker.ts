@@ -281,8 +281,12 @@ class EpgDatabase {
 }
 
 /**
- * Parse XMLTV datetime format to ISO string
+ * Parse XMLTV datetime format to UTC ISO string.
  * Format: YYYYMMDDHHmmss +HHMM or YYYYMMDDHHmmss
+ * Always returns a UTC ISO string for consistent SQLite string comparisons.
+ *
+ * When a timezone offset is present it is used to convert to UTC.
+ * When NO offset is present the time is assumed to be UTC (append Z).
  */
 function parseXmltvDate(dateStr: string): string {
     if (!dateStr) return '';
@@ -303,7 +307,8 @@ function parseXmltvDate(dateStr: string): string {
         isoString += 'Z';
     }
 
-    return isoString;
+    // Normalize to UTC so SQLite string comparisons work correctly
+    return new Date(isoString).toISOString();
 }
 
 /**

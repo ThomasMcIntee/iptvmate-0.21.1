@@ -232,11 +232,25 @@ export class XtreamApiService {
             return [];
         }
 
-        return response.epg_listings.map((item) => ({
-            ...item,
-            title: this.decodeBase64Unicode(item.title).trim(),
-            description: this.decodeBase64Unicode(item.description).trim(),
-        })) as EpgItem[];
+        return response.epg_listings.map((item) => {
+            // start_timestamp / stop_timestamp are UTC Unix seconds (verified).
+            // The server appears to be UTC+2 and its timestamps are 2 hours ahead
+            // of the viewer's local UTC, so subtract 2 hours (7200s) to compensate.
+            const tsToIso = (ts: string) =>
+                ts ? new Date((parseInt(ts, 10) - 7200) * 1000).toISOString() : '';
+
+            const startIso = tsToIso(item.start_timestamp);
+            const stopIso  = tsToIso(item.stop_timestamp);
+
+            return {
+                ...item,
+                title: this.decodeBase64Unicode(item.title).trim(),
+                description: this.decodeBase64Unicode(item.description).trim(),
+                start: startIso,
+                end:   stopIso,
+                stop:  stopIso,
+            };
+        }) as EpgItem[];
     }
 
     /**
