@@ -1,6 +1,6 @@
 // @import 'themes/';
+@use '../../../libs/ui/components/src/lib/resizable/resizable';
 @import '@yangkghjh/videojs-aspect-ratio-panel/dist/videojs-aspect-ratio-panel.css';
-@import '../../../libs/ui/components/src/lib/resizable/resizable.scss';
 
 // macOS specific styles - space for traffic lights
 app-root.macos-platform app-header .modern-header {
@@ -17,6 +17,7 @@ app-root.macos-platform app-navigation .portal-status-container {
 
 body,
 html {
+    -webkit-user-select: none;
     user-select: none;
     margin: 0;
     padding: 0;
@@ -27,6 +28,7 @@ html {
 // Re-enable context menu and text selection for input fields
 input,
 textarea {
+    -webkit-user-select: text;
     user-select: text;
 }
 
@@ -85,6 +87,7 @@ textarea,
 }
 
 .cdk-overlay-backdrop {
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
 }
 
