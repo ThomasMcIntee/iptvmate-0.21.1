@@ -21,6 +21,34 @@ export class PlayerService {
     private dataService = inject(DataService);
     private settingsStore = inject(SettingsStore);
 
+    private getPlayableUrlForBrowser(
+        streamUrl: string,
+        userAgent?: string,
+        referer?: string,
+        origin?: string
+    ): string {
+        if (
+            window.electron ||
+            streamUrl.includes('/stream?url=') ||
+            !/^https?:\/\//i.test(streamUrl)
+        ) {
+            return streamUrl;
+        }
+
+        const params = new URLSearchParams({ url: streamUrl });
+        if (userAgent) {
+            params.set('ua', userAgent);
+        }
+        if (referer) {
+            params.set('ref', referer);
+        }
+        if (origin) {
+            params.set('org', origin);
+        }
+
+        return `http://localhost:3000/stream?${params.toString()}`;
+    }
+
     openPlayer(
         streamUrl: string,
         title: string,
@@ -35,6 +63,12 @@ export class PlayerService {
         subtitleUrl?: string | null
     ) {
         const player = this.settingsStore.player() ?? VideoPlayer.VideoJs;
+        const playableStreamUrl = this.getPlayableUrlForBrowser(
+            streamUrl,
+            userAgent,
+            referer,
+            origin
+        );
 
         if (player === VideoPlayer.MPV) {
             if (!hideExternalInfoDialog) {
@@ -68,7 +102,13 @@ export class PlayerService {
             this.dialog.open<PlayerDialogComponent, PlayerDialogData>(
                 PlayerDialogComponent,
                 {
-                    data: { streamUrl, title, contentInfo, startTime, subtitleUrl: subtitleUrl ?? undefined },
+                    data: {
+                        streamUrl: playableStreamUrl,
+                        title,
+                        contentInfo,
+                        startTime,
+                        subtitleUrl: subtitleUrl ?? undefined,
+                    },
                     width: '80%',
                     maxWidth: '1200px',
                     maxHeight: '90vh',

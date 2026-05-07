@@ -45,6 +45,10 @@ export class LiveStreamLayoutComponent {
     @Input({ required: true }) player: VideoPlayer = VideoPlayer.VideoJs;
     @Input() epgItems!: EpgItem[];
     @Input() streamUrl!: string;
+    @Input()
+    streamHeaders:
+        | { userAgent?: string; referrer?: string; origin?: string }
+        | undefined;
     @Input() activeLiveStream!: XtreamItem;
 
     @Output() itemClicked = new EventEmitter<XtreamItem>();

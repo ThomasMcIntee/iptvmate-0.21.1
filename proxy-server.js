@@ -209,6 +209,8 @@ const M3U8_CONTENT_TYPES = [
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
 const MAX_REDIRECTS = 10;
+const VOD_REDIRECT_CACHE_TTL_MS = 2 * 60 * 1000;
+const vodRedirectCache = new Map();
 
 function resolveHttpTarget(rawUrl, base) {
     try {
@@ -220,7 +222,42 @@ function resolveHttpTarget(rawUrl, base) {
     return null;
 }
 
-function rewriteM3u8(content, proxyBase, manifestUrl) {
+function isVodLikeUrl(value) {
+    const lower = value.toLowerCase();
+    return (
+        lower.includes('/movie/') ||
+        lower.includes('/series/') ||
+        lower.endsWith('.mp4') ||
+        lower.includes('.mp4?') ||
+        lower.endsWith('.mkv') ||
+        lower.includes('.mkv?')
+    );
+}
+
+function getCachedVodRedirect(originalUrl) {
+    const cached = vodRedirectCache.get(originalUrl);
+    if (!cached) return null;
+    if (cached.expiresAt < Date.now()) {
+        vodRedirectCache.delete(originalUrl);
+        return null;
+    }
+    return cached.targetUrl;
+}
+
+function setCachedVodRedirect(originalUrl, targetUrl) {
+    vodRedirectCache.set(originalUrl, {
+        targetUrl,
+        expiresAt: Date.now() + VOD_REDIRECT_CACHE_TTL_MS,
+    });
+}
+
+function rewriteM3u8(content, proxyBase, manifestUrl, passthroughParams) {
+    const buildProxyUrl = (target) => {
+        const params = new URLSearchParams(passthroughParams);
+        params.set('url', target);
+        return `${proxyBase}?${params.toString()}`;
+    };
+
     return content
         .split('\n')
         .map((line) => {
@@ -229,12 +266,12 @@ function rewriteM3u8(content, proxyBase, manifestUrl) {
                 return line.replace(/URI="([^"]+)"/g, (_m, rawUri) => {
                     const target = resolveHttpTarget(rawUri, manifestUrl);
                     if (!target) return `URI="${rawUri}"`;
-                    return `URI="${proxyBase}?url=${encodeURIComponent(target)}"`;
+                    return `URI="${buildProxyUrl(target)}"`;
                 });
             }
             if (!trimmed) return line;
             const target = resolveHttpTarget(trimmed, manifestUrl);
-            if (target) return `${proxyBase}?url=${encodeURIComponent(target)}`;
+            if (target) return buildProxyUrl(target);
             return line;
         })
         .join('\n');
@@ -243,6 +280,13 @@ function rewriteM3u8(content, proxyBase, manifestUrl) {
 function handleStream(req, res) {
     const parsed = new URL(req.url, `http://localhost:${PORT}`);
     const targetUrl = parsed.searchParams.get('url');
+    const userAgent = parsed.searchParams.get('ua');
+    const referer = parsed.searchParams.get('ref');
+    const origin = parsed.searchParams.get('org');
+    const passthroughParams = new URLSearchParams();
+    if (userAgent) passthroughParams.set('ua', userAgent);
+    if (referer) passthroughParams.set('ref', referer);
+    if (origin) passthroughParams.set('org', origin);
 
     if (!targetUrl) {
         res.writeHead(400);
@@ -259,6 +303,10 @@ function handleStream(req, res) {
         return;
     }
 
+    console.log(
+        `[stream] -> ${target.protocol}//${target.host}${target.pathname}`
+    );
+
     const skipHeaders = new Set(['host', 'origin', 'referer']);
     const forwardHeaders = {};
     for (const [k, v] of Object.entries(req.headers)) {
@@ -267,9 +315,40 @@ function handleStream(req, res) {
         }
     }
 
-    const createRequest = (currentTarget, redirectCount) => {
+    const createRequest = (currentTarget, redirectCount, originalUrl) => {
         const isHttps = currentTarget.protocol === 'https:';
         const transport = isHttps ? https : http;
+        const targetOrigin = `${currentTarget.protocol}//${currentTarget.host}`;
+        const normalizedHeaders = Object.fromEntries(
+            Object.entries(forwardHeaders).map(([k, v]) => [k.toLowerCase(), v])
+        );
+
+        // IPTV providers often require browser-like headers and same-origin referer/origin.
+        if (!normalizedHeaders['user-agent']) {
+            forwardHeaders['user-agent'] =
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+        }
+        if (!normalizedHeaders['accept']) {
+            forwardHeaders['accept'] =
+                'application/vnd.apple.mpegurl, application/x-mpegURL, video/*, */*;q=0.8';
+        }
+        if (!normalizedHeaders['referer']) {
+            forwardHeaders['referer'] = `${targetOrigin}/`;
+        }
+        if (!normalizedHeaders['origin']) {
+            forwardHeaders['origin'] = targetOrigin;
+        }
+
+        if (userAgent) {
+            forwardHeaders['user-agent'] = userAgent;
+        }
+        if (referer) {
+            forwardHeaders['referer'] = referer;
+        }
+        if (origin) {
+            forwardHeaders['origin'] = origin;
+        }
+
         const options = {
             hostname: currentTarget.hostname,
             port: currentTarget.port
@@ -283,6 +362,10 @@ function handleStream(req, res) {
 
         const proxyReq = transport.request(options, (proxyRes) => {
             const statusCode = proxyRes.statusCode ?? 0;
+            const contentType = String(proxyRes.headers['content-type'] || '');
+            console.log(
+                `[stream] <- ${statusCode} ${currentTarget.host}${currentTarget.pathname} ${contentType}`
+            );
             const locationHeader = proxyRes.headers.location;
             const location = typeof locationHeader === 'string'
                 ? locationHeader
@@ -292,9 +375,13 @@ function handleStream(req, res) {
                 const nextUrl = resolveHttpTarget(location, currentTarget.toString());
                 if (nextUrl) {
                     proxyRes.resume();
-                    createRequest(new URL(nextUrl), redirectCount + 1).end();
+                    createRequest(new URL(nextUrl), redirectCount + 1, originalUrl).end();
                     return;
                 }
+            }
+
+            if (isVodLikeUrl(originalUrl) && currentTarget.toString() !== originalUrl) {
+                setCachedVodRedirect(originalUrl, currentTarget.toString());
             }
 
             const responseHeaders = {};
@@ -304,8 +391,8 @@ function handleStream(req, res) {
             delete responseHeaders['location'];
             responseHeaders['access-control-allow-origin'] = '*';
 
-            const contentType = (proxyRes.headers['content-type'] || '').toLowerCase();
-            const isM3u8 = M3U8_CONTENT_TYPES.some((t) => contentType.includes(t))
+            const lowerContentType = contentType.toLowerCase();
+            const isM3u8 = M3U8_CONTENT_TYPES.some((t) => lowerContentType.includes(t))
                 || currentTarget.pathname.toLowerCase().endsWith('.m3u8')
                 || currentTarget.pathname.toLowerCase().endsWith('.m3u');
 
@@ -317,7 +404,12 @@ function handleStream(req, res) {
                 proxyRes.on('end', () => {
                     const body = Buffer.concat(chunks).toString('utf8');
                     const proxyBase = `http://localhost:${PORT}/stream`;
-                    const rewritten = rewriteM3u8(body, proxyBase, currentTarget.toString());
+                    const rewritten = rewriteM3u8(
+                        body,
+                        proxyBase,
+                        currentTarget.toString(),
+                        passthroughParams
+                    );
                     res.end(rewritten);
                 });
             } else {
@@ -334,7 +426,16 @@ function handleStream(req, res) {
         return proxyReq;
     };
 
-    createRequest(target, 0).end();
+    const originalUrl = target.toString();
+    const isVodRequest = isVodLikeUrl(originalUrl);
+    const cachedVodTarget = isVodRequest ? getCachedVodRedirect(originalUrl) : null;
+    const initialTarget = cachedVodTarget ? new URL(cachedVodTarget) : target;
+
+    if (cachedVodTarget) {
+        console.log(`[stream] using cached VOD target for ${target.pathname}`);
+    }
+
+    createRequest(initialTarget, 0, originalUrl).end();
 }
 
 // ─── HTTP server ──────────────────────────────────────────────────────────────
@@ -352,6 +453,9 @@ const server = http.createServer(async (req, res) => {
     const query = parseQuery(parsed.search.slice(1));
 
     try {
+        if (parsed.pathname === '/health') {
+            return sendJson(res, 200, { ok: true });
+        }
         if (parsed.pathname === '/xtream') return await handleXtream(query, res);
         if (parsed.pathname === '/parse')  return await handleParse(query, res);
         if (parsed.pathname === '/stalker') return await handleStalker(query, res);
@@ -366,6 +470,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
     console.log(`[iptvmate-proxy] Listening on http://localhost:${PORT}`);
+    console.log('  /health  — health check endpoint');
     console.log('  /xtream  — Xtream Codes API proxy');
     console.log('  /parse   — M3U/M3U8 playlist parser');
     console.log('  /stalker — Stalker portal proxy');

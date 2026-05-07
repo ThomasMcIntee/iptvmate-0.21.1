@@ -58,10 +58,9 @@
                 }
                 <!-- Add ArtPlayer component -->
                 @if (playerSettings.player === 'artplayer') {
-                    <app-art-player
-                        [channel]="activeChannel"
-                        [volume]="volume"
-                        [showCaptions]="playerSettings.showCaptions!"
+                    <app-web-player-view
+                        [streamUrl]="activeChannel.url + (activeChannel.epgParams || '')"
+                        [streamHeaders]="streamHeaders"
                     />
                 }
                 @if (playerSettings.player === 'mpv') {

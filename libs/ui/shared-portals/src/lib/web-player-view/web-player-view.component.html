@@ -1,4 +1,12 @@
-@if (player === 'videojs') {
+@if (forceHtml5Fallback) {
+    <app-html-video-player
+        [channel]="$any(channel)"
+        [showCaptions]="showCaptions"
+        [startTime]="startTime()"
+        [subtitleUrl]="subtitleUrl()"
+        (timeUpdate)="timeUpdate.emit($event)"
+    />
+} @else if (player === 'videojs' || forceVideoJsFallback) {
     <app-vjs-player
         [options]="vjsOptions"
         [showCaptions]="showCaptions"
@@ -15,14 +23,17 @@
         (timeUpdate)="timeUpdate.emit($event)"
     />
 } @else if (player === 'artplayer') {
-    <app-art-player
-        [channel]="$any(channel)"
-        [volume]="1"
-        [showCaptions]="showCaptions"
-        [startTime]="startTime()"
-        [subtitleUrl]="subtitleUrl()"
-        (timeUpdate)="timeUpdate.emit($event)"
-    />
+    @if (channel) {
+        <app-art-player
+            [channel]="$any(channel)"
+            [volume]="1"
+            [showCaptions]="showCaptions"
+            [startTime]="startTime()"
+            [subtitleUrl]="subtitleUrl()"
+            (playbackError)="onArtPlayerPlaybackError()"
+            (timeUpdate)="timeUpdate.emit($event)"
+        />
+    }
 } @else {
     <app-vjs-player
         [options]="vjsOptions"

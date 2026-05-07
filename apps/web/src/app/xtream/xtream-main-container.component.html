@@ -43,6 +43,7 @@
                     [channels]="items"
                     [player]="player"
                     [streamUrl]="streamUrl"
+                    [streamHeaders]="streamHeaders"
                     [epgItems]="epgItems"
                     [activeLiveStream]="activeLiveStream"
                     (itemClicked)="itemClicked($event)"
@@ -81,6 +82,7 @@
                 [channels]="favoritesLiveStream$ | async"
                 [player]="player"
                 [streamUrl]="streamUrl"
+                [streamHeaders]="streamHeaders"
                 [epgItems]="epgItems"
                 (itemClicked)="itemClicked($event)"
             />

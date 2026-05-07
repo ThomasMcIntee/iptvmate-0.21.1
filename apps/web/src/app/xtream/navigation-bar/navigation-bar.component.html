@@ -46,7 +46,7 @@
 </div>
 <div id="sub-panel">
   <div class="breadcrumbs">
-    @for (item of breadcrumbs; track item; let i = $index) {
+    @for (item of breadcrumbs; track trackBreadcrumb($index, item); let i = $index) {
       <div
         (click)="processBreadcrumbClick(item)"
         >

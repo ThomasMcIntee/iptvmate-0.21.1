@@ -17,7 +17,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { StorageMap } from '@ngx-pwa/local-storage';
 import {
-    ArtPlayerComponent,
     AudioPlayerComponent,
     COMPONENT_OVERLAY_REF,
     EpgListComponent,
@@ -62,10 +61,10 @@ import {
 } from '../../shared/services/remote-channel-navigation.util';
 import { SettingsComponent } from '../../settings/settings.component';
 import { getExtensionFromUrl } from 'm3u-utils';
+import { WebPlayerViewComponent } from 'shared-portals';
 
 @Component({
     imports: [
-        ArtPlayerComponent,
         AsyncPipe,
         AudioPlayerComponent,
         CommonModule,
@@ -78,6 +77,7 @@ import { getExtensionFromUrl } from 'm3u-utils';
         SidebarComponent,
         ToolbarComponent,
         VjsPlayerComponent,
+        WebPlayerViewComponent,
     ],
     templateUrl: './video-player.component.html',
     styleUrl: './video-player.component.scss',
@@ -130,6 +130,9 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
     private channelNumberTimeout?: number;
 
     volume = 1;
+    streamHeaders:
+        | { userAgent?: string; referrer?: string; origin?: string }
+        | undefined;
 
     constructor() {
         // Initialize volume from localStorage in constructor
@@ -194,6 +197,12 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
                                     'localhost'
                                 );
                             }
+
+                            this.streamHeaders = {
+                                userAgent: playlist.userAgent,
+                                referrer: playlist.referrer,
+                                origin: playlist.origin,
+                            };
 
                             this.store.dispatch(
                                 ChannelActions.setChannels({

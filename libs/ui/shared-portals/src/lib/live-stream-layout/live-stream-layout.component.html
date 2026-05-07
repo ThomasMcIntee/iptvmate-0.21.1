@@ -1,6 +1,6 @@
 <div
     [class]="
-        player === 'videojs' || player === 'html5'
+        player === 'videojs' || player === 'html5' || player === 'artplayer'
             ? 'itv-container'
             : 'itv-container-epg'
     "
@@ -59,10 +59,17 @@
             </mat-selection-list>
         </div>
     </div>
-    @if (player === 'videojs' || player === 'html5') {
+    @if (
+        player === 'videojs' ||
+        player === 'html5' ||
+        player === 'artplayer'
+    ) {
         @if (streamUrl) {
             <div class="video-player">
-                <app-web-player-view [streamUrl]="streamUrl" />
+                <app-web-player-view
+                    [streamUrl]="streamUrl"
+                    [streamHeaders]="streamHeaders"
+                />
             </div>
         }
     }

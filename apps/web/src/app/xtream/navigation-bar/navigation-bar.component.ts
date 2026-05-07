@@ -123,6 +123,10 @@ export class NavigationBarComponent implements OnChanges {
         return value.contentType;
     }
 
+    trackBreadcrumb(index: number, item: Breadcrumb): string {
+        return `${item.action}|${item.category_id ?? ''}|${item.title}|${index}`;
+    }
+
     clickFavorites(): void {
         const item = this.activeLiveStream;
         if (!this.isFavoriteStream) {

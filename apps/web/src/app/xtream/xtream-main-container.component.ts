@@ -161,6 +161,9 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
     contentId: number;
     errorViewInfo = { title: '', message: '' };
     streamUrl: string;
+    streamHeaders:
+        | { userAgent?: string; referrer?: string; origin?: string }
+        | undefined;
     epgItems = [];
     hideExternalInfoDialog = this.portalStore.hideExternalInfoDialog;
     activeLiveStream: XtreamLiveStream;
@@ -339,15 +342,44 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
     playLiveStream(item: XtreamLiveStream) {
         const { serverUrl, username, password } =
             this.currentPlaylist() as Playlist;
-        const streamUrl = `${serverUrl}/${item.stream_type}/${username}/${password}/${item.stream_id}.m3u8`;
+        const streamFormat = this.settingsStore.streamFormat() ?? 'ts';
+        const directStreamUrl = `${serverUrl}/${item.stream_type}/${username}/${password}/${item.stream_id}.${streamFormat}`;
+        const streamUrl = this.getPlayableLiveUrl(directStreamUrl);
         this.activeLiveStream = item;
         this.openPlayer(streamUrl, item.name);
     }
 
+    private getPlayableLiveUrl(streamUrl: string): string {
+        if (window.electron) {
+            return streamUrl;
+        }
+
+        const playlist = this.currentPlaylist() as Playlist;
+        const params = new URLSearchParams({ url: streamUrl });
+
+        if (playlist?.userAgent) {
+            params.set('ua', playlist.userAgent);
+        }
+        if (playlist?.referrer) {
+            params.set('ref', playlist.referrer);
+        }
+        if (playlist?.origin) {
+            params.set('org', playlist.origin);
+        }
+
+        return `http://localhost:3000/stream?${params.toString()}`;
+    }
+
     openPlayer(streamUrl: string, title: string) {
-        this.streamUrl = streamUrl;
+        const playableStreamUrl = this.getPlayableUrlForBrowser(streamUrl);
+        this.streamUrl = playableStreamUrl;
         this.player = this.settingsStore.player() ?? VideoPlayer.VideoJs;
         const playlist = this.currentPlaylist() as Playlist;
+        this.streamHeaders = {
+            userAgent: playlist?.userAgent,
+            referrer: playlist?.referrer,
+            origin: playlist?.origin,
+        };
 
         if (this.player === VideoPlayer.MPV) {
             if (!this.hideExternalInfoDialog())
@@ -376,7 +408,7 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
                 this.dialog.open<PlayerDialogComponent, PlayerDialogData>(
                     PlayerDialogComponent,
                     {
-                        data: { streamUrl, title },
+                        data: { streamUrl: playableStreamUrl, title },
                         width: '80%',
                         maxWidth: '1200px',
                         maxHeight: '90vh',
@@ -384,6 +416,27 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
                 );
             }
         }
+    }
+
+    private getPlayableUrlForBrowser(streamUrl: string): string {
+        if (window.electron || streamUrl.includes('/stream?url=')) {
+            return streamUrl;
+        }
+
+        const playlist = this.currentPlaylist() as Playlist;
+        const params = new URLSearchParams({ url: streamUrl });
+
+        if (playlist?.userAgent) {
+            params.set('ua', playlist.userAgent);
+        }
+        if (playlist?.referrer) {
+            params.set('ref', playlist.referrer);
+        }
+        if (playlist?.origin) {
+            params.set('org', playlist.origin);
+        }
+
+        return `http://localhost:3000/stream?${params.toString()}`;
     }
 
     playVod(vodItem: XtreamVodDetails) {
@@ -430,35 +483,10 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
     }
 
     playEpisode(episode: XtreamSerieEpisode) {
-        const playlist = this.currentPlaylist() as Playlist;
-        const { serverUrl, username, password, userAgent, referrer, origin } =
-            playlist;
-        const player = this.settingsStore.player();
+        const { serverUrl, username, password } = this.currentPlaylist() as Playlist;
         const streamUrl = `${serverUrl}/series/${username}/${password}/${episode.id}.${episode.container_extension}`;
-        if (player === VideoPlayer.MPV) {
-            this.dataService.sendIpcEvent(OPEN_MPV_PLAYER, {
-                url: streamUrl,
-                title: episode.title,
-                'user-agent': userAgent,
-                referer: referrer,
-                origin: origin,
-            });
-        } else if (player === VideoPlayer.VLC) {
-            this.dataService.sendIpcEvent(OPEN_VLC_PLAYER, {
-                url: streamUrl,
-                title: episode.title,
-                'user-agent': userAgent,
-                referer: referrer,
-                origin: origin,
-            });
-        } else {
-            this.dialog.open(PlayerDialogComponent, {
-                data: { streamUrl, player, title: episode.title },
-                width: '80%',
-                maxWidth: '1200px',
-                maxHeight: '90vh',
-            });
-        }
+
+        this.openPlayer(streamUrl, episode.title);
     }
 
     changeContentType(contentType: ContentType) {
