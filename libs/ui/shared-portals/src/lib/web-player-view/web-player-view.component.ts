@@ -145,43 +145,62 @@ export class WebPlayerViewComponent {
     }
 
     private getAlternateLiveUrl(streamUrl: string): string | null {
-        const source = streamUrl.toLowerCase();
-        if (!source.includes('/live/')) {
-            return null;
-        }
+        const buildAlternateUrl = (targetUrl: string): string | null => {
+            const source = targetUrl.toLowerCase();
+            if (!source.includes('/live/')) {
+                return null;
+            }
 
-        if (WebPlayerViewComponent.XTREAM_TS_SUFFIX_REGEX.test(source)) {
-            return streamUrl.replace(
-                WebPlayerViewComponent.XTREAM_TS_SUFFIX_REGEX,
-                '.m3u8'
-            );
-        }
+            if (WebPlayerViewComponent.XTREAM_TS_SUFFIX_REGEX.test(source)) {
+                return targetUrl.replace(
+                    WebPlayerViewComponent.XTREAM_TS_SUFFIX_REGEX,
+                    '.m3u8'
+                );
+            }
 
-        if (WebPlayerViewComponent.XTREAM_M3U8_SUFFIX_REGEX.test(source)) {
-            return streamUrl.replace(
-                WebPlayerViewComponent.XTREAM_M3U8_SUFFIX_REGEX,
-                '.ts'
-            );
-        }
+            if (WebPlayerViewComponent.XTREAM_M3U8_SUFFIX_REGEX.test(source)) {
+                return targetUrl.replace(
+                    WebPlayerViewComponent.XTREAM_M3U8_SUFFIX_REGEX,
+                    '.ts'
+                );
+            }
 
-        // Some providers expose live/play URLs without an extension.
-        // Prefer an explicit HLS variant for ArtPlayer compatibility.
-        try {
-            const parsed = new URL(streamUrl);
-            if (parsed.pathname.toLowerCase().includes('/live/play/')) {
+            if (!source.includes('/live/play/')) {
+                return null;
+            }
+
+            try {
+                const parsed = new URL(targetUrl);
                 const parts = parsed.pathname.split('/');
                 const last = parts[parts.length - 1] ?? '';
-                if (last && !last.includes('.')) {
-                    parts[parts.length - 1] = `${last}.m3u8`;
-                    parsed.pathname = parts.join('/');
-                    return parsed.toString();
+                if (!last || last.includes('.')) {
+                    return null;
                 }
+                parts[parts.length - 1] = `${last}.m3u8`;
+                parsed.pathname = parts.join('/');
+                return parsed.toString();
+            } catch {
+                return null;
+            }
+        };
+
+        try {
+            const parsed = new URL(streamUrl);
+            const nestedUrl = parsed.searchParams.get('url');
+            if (nestedUrl) {
+                const decodedNestedUrl = decodeURIComponent(nestedUrl);
+                const alternateNestedUrl = buildAlternateUrl(decodedNestedUrl);
+                if (!alternateNestedUrl) {
+                    return null;
+                }
+                parsed.searchParams.set('url', alternateNestedUrl);
+                return parsed.toString();
             }
         } catch {
-            // Ignore malformed URLs and keep current fallback behavior.
+            // Fall back to direct URL handling below.
         }
 
-        return null;
+        return buildAlternateUrl(streamUrl);
     }
 
     private buildVjsSource(

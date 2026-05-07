@@ -74,4 +74,19 @@ describe('WebPlayerViewComponent playback fallbacks', () => {
 
         expect(component.forceVideoJsFallback).toBe(true);
     });
+
+    it('builds an alternate m3u8 url for proxied live ts streams', () => {
+        const proxiedTsUrl =
+            'http://localhost:3000/stream?url=' +
+            encodeURIComponent('http://provider.example/live/user/pass/414149.ts');
+
+        const alternateUrl = (component as any).getAlternateLiveUrl(proxiedTsUrl);
+        const parsed = new URL(alternateUrl);
+
+        expect(parsed.origin).toBe('http://localhost:3000');
+        expect(parsed.pathname).toBe('/stream');
+        expect(parsed.searchParams.get('url')).toBe(
+            'http://provider.example/live/user/pass/414149.m3u8'
+        );
+    });
 });
