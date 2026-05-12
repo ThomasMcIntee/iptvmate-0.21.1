@@ -15,8 +15,7 @@ import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, routerReducer } from '@ngrx/router-store';
 import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideTranslateService } from '@ngx-translate/core';
 import { PlaylistEffects, playlistReducer } from 'm3u-state';
 import { NgxIndexedDBModule, NgxIndexedDBService } from 'ngx-indexed-db';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
@@ -27,11 +26,6 @@ import { routes } from './app.routes';
 import { ElectronService } from './services/electron.service';
 import { PwaService } from './services/pwa.service';
 import { provideXtreamDataSource } from './xtream-tauri/data-sources';
-
-// AoT requires an exported function for factories
-export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
-    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 /**
  * Conditionally provides the necessary service based on the current environment
@@ -71,15 +65,9 @@ export const appConfig: ApplicationConfig = {
             NgxSkeletonLoaderModule.forRoot({
                 animation: 'pulse',
                 loadingText: 'This item is actually loading...',
-            }),
-            TranslateModule.forRoot({
-                loader: {
-                    provide: TranslateLoader,
-                    useFactory: HttpLoaderFactory,
-                    deps: [HttpClient],
-                },
             })
         ),
+        provideTranslateService(),
         {
             provide: DataService,
             useFactory: DataFactory,

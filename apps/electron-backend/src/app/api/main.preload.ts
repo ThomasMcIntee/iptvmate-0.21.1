@@ -129,7 +129,7 @@ contextBridge.exposeInMainWorld('electron', {
             contentInfo,
             startTime
         ),
-    autoUpdatePlaylists: (playlists) =>
+    autoUpdatePlaylists: (playlists: any) =>
         ipcRenderer.invoke('AUTO_UPDATE', playlists),
     fetchEpg: (urls: string[]) =>
         ipcRenderer.invoke('FETCH_EPG', { url: urls }),

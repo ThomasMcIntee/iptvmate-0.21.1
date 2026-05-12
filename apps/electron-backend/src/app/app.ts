@@ -6,15 +6,15 @@ import { store, WINDOW_BOUNDS } from './services/store.service';
 export default class App {
     // Keep a global reference of the window object, if you don't, the window will
     // be closed automatically when the JavaScript object is garbage collected.
-    static mainWindow: Electron.BrowserWindow;
+    static mainWindow: Electron.BrowserWindow | null;
     static application: Electron.App;
-    static BrowserWindow;
+    static BrowserWindow: typeof BrowserWindow;
 
     public static isDevelopmentMode() {
         // First check ELECTRON_IS_DEV environment variable (used by E2E tests)
         // This allows E2E tests to run in production mode without packaging
         if ('ELECTRON_IS_DEV' in process.env) {
-            return parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
+            return parseInt(process.env.ELECTRON_IS_DEV || '0', 10) === 1;
         }
         // Fall back to Electron's built-in app.isPackaged
         // This is the most reliable way to detect if the app is packaged
@@ -35,7 +35,7 @@ export default class App {
     }
 
     private static onRedirect(event: any, url: string) {
-        if (url !== App.mainWindow.webContents.getURL()) {
+        if (App.mainWindow && url !== App.mainWindow.webContents.getURL()) {
             // this is a normal external redirect, open it in a new browser window
             event.preventDefault();
             shell.openExternal(url);
@@ -77,17 +77,17 @@ export default class App {
         // Create the browser window.
         App.mainWindow = new BrowserWindow({
             title: 'iptvmate',
-            width: width,
-            height: height,
             show: false,
             webPreferences: {
                 contextIsolation: true,
                 backgroundThrottling: false,
                 preload: join(__dirname, 'main.preload.js'),
             },
-            ...savedWindowBounds,
             minHeight: 600,
             minWidth: 900,
+            ...savedWindowBounds,
+            width,
+            height,
             ...(process.platform === 'darwin'
                 ? {
                       titleBarStyle: 'hidden',
@@ -95,14 +95,14 @@ export default class App {
                   }
                 : {}),
         });
-        App.mainWindow.setMenu(null);
+        App.mainWindow!.setMenu(null);
         if (!savedWindowBounds) {
-            App.mainWindow.center();
+            App.mainWindow!.center();
         }
 
         // if main window is ready to show, close the splash window and show the main window
-        App.mainWindow.once('ready-to-show', () => {
-            App.mainWindow.show();
+        App.mainWindow!.once('ready-to-show', () => {
+            App.mainWindow!.show();
         });
 
         // handle all external redirects in a new browser window
@@ -112,21 +112,21 @@ export default class App {
         // });
 
         // Emitted when the window is closed.
-        App.mainWindow.on('closed', () => {
+        App.mainWindow!.on('closed', () => {
             // Dereference the window object, usually you would store windows
             // in an array if your app supports multi windows, this is the time
             // when you should delete the corresponding element.
             App.mainWindow = null;
         });
 
-        App.mainWindow.on('close', () => {
+        App.mainWindow!.on('close', () => {
             if (App.mainWindow) {
                 store.set(WINDOW_BOUNDS, App.mainWindow.getNormalBounds());
             }
         });
 
         // Enable context menu for input fields only
-        App.mainWindow.webContents.on('context-menu', (event, params) => {
+        App.mainWindow!.webContents.on('context-menu', (event, params) => {
             const { isEditable, editFlags } = params;
 
             // Check if this is an editable field (input, textarea, contenteditable)
@@ -168,15 +168,15 @@ export default class App {
         if (App.isDevelopmentMode()) {
             const url = `http://localhost:${rendererAppPort}`;
             const tryLoad = () => {
-                App.mainWindow.loadURL(url).catch(() => {
+                App.mainWindow!.loadURL(url).catch(() => {
                     // Angular dev server not ready yet – retry after 1s
                     setTimeout(tryLoad, 1000);
                 });
             };
             tryLoad();
-            App.mainWindow.webContents.openDevTools();
+            App.mainWindow!.webContents.openDevTools();
         } else {
-            App.mainWindow.loadFile(
+            App.mainWindow!.loadFile(
                 join(__dirname, '..', rendererAppName, 'index.html')
             );
         }

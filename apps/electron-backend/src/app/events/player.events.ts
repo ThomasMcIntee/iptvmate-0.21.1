@@ -436,7 +436,7 @@ ipcMain.handle(
                         const lines = data
                             .toString()
                             .split('\n')
-                            .map((line) => line.trim())
+                            .map((line: string) => line.trim())
                             .filter(Boolean);
 
                         for (const output of lines) {
