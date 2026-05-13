@@ -21,14 +21,18 @@ function formatXtreamError(error: unknown, requestUrl: string, action?: string) 
     };
 
     if (axios.isAxiosError(error)) {
+        const systemError = error as NodeJS.ErrnoException & {
+            hostname?: string;
+        };
+
         return {
             ...base,
             type: 'AxiosError',
             code: error.code,
             status: error.response?.status,
             message: error.message,
-            syscall: (error as NodeJS.ErrnoException).syscall,
-            hostname: (error as any).hostname,
+            syscall: systemError.syscall,
+            hostname: systemError.hostname,
         };
     }
 

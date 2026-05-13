@@ -5,15 +5,20 @@
 
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { ipcMain } from 'electron';
-import { getDatabase } from '../../database/connection';
+import type { PlaybackPositionData } from 'shared-interfaces';
+import { getDatabase, type DatabaseInstance } from '../../database/connection';
 import * as schema from '../../database/schema';
+
+type PlaybackPositionPayload = PlaybackPositionData & {
+    playlistType?: 'xtream' | 'stalker' | 'm3u-file' | 'm3u-text' | 'm3u-url';
+};
 
 /**
  * Ensure playlist exists in SQLite (auto-create if missing)
  * This handles legacy playlists that weren't synced to SQLite
  */
 async function ensurePlaylistExists(
-    db: any,
+    db: DatabaseInstance,
     playlistId: string,
     playlistType: 'xtream' | 'stalker' | 'm3u-file' | 'm3u-text' | 'm3u-url' = 'stalker'
 ): Promise<void> {
@@ -38,7 +43,7 @@ async function ensurePlaylistExists(
  */
 ipcMain.handle(
     'DB_SAVE_PLAYBACK_POSITION',
-    async (event, playlistId: string, data: any) => {
+    async (event, playlistId: string, data: PlaybackPositionPayload) => {
         try {
             const db = await getDatabase();
 
@@ -165,7 +170,7 @@ ipcMain.handle(
  */
 ipcMain.handle(
     'DB_GET_RECENT_PLAYBACK_POSITIONS',
-    async (event, playlistId: string, limit: number = 20) => {
+    async (event, playlistId: string, limit = 20) => {
         try {
             const db = await getDatabase();
             const result = await db

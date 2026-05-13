@@ -5,13 +5,15 @@
 
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
-import { download, File as ElectronDlFile } from 'electron-dl';
+import { download } from 'electron-dl';
 import { existsSync, unlinkSync } from 'fs';
-import { basename, extname, join } from 'path';
+import { extname, join } from 'path';
 import { getDatabase } from '../../database/connection';
 import * as schema from '../../database/schema';
 
-type DownloadStatus = 'queued' | 'downloading' | 'completed' | 'failed' | 'canceled';
+type DownloadItemWithCancel = {
+    cancel?: () => void;
+};
 
 interface DownloadTask {
     id: number;
@@ -19,7 +21,7 @@ interface DownloadTask {
     fileName: string;
     directory: string;
     headers?: Record<string, string>;
-    downloadItem?: ElectronDlFile;
+    downloadItem?: DownloadItemWithCancel;
 }
 
 // Download queue management
@@ -116,13 +118,15 @@ async function startDownload(task: DownloadTask) {
     const PROGRESS_THROTTLE_MS = 500;
 
     try {
-        const downloadOptions: Parameters<typeof download>[2] = {
+        const downloadOptions: NonNullable<Parameters<typeof download>[2]> & {
+            headers?: Record<string, string>;
+        } = {
             directory: task.directory,
             filename: task.fileName,
             overwrite: true,
             onStarted: (item) => {
                 console.log(`[Downloads] Started: ${task.fileName}`);
-                task.downloadItem = item as unknown as ElectronDlFile;
+                task.downloadItem = item as DownloadItemWithCancel;
             },
             onProgress: async (progress) => {
                 const now = Date.now();
@@ -188,7 +192,7 @@ async function startDownload(task: DownloadTask) {
 
         // Add headers if provided (user-agent, referer, origin)
         if (task.headers) {
-            (downloadOptions as any).headers = task.headers;
+            downloadOptions.headers = task.headers;
         }
 
         await download(mainWindow, task.url, downloadOptions);
@@ -386,7 +390,7 @@ ipcMain.handle('DOWNLOADS_CANCEL', async (_event, downloadId: number) => {
         // Check if it's the active download
         if (activeDownload && activeDownload.id === downloadId) {
             if (activeDownload.downloadItem) {
-                (activeDownload.downloadItem as any).cancel?.();
+                activeDownload.downloadItem.cancel?.();
             }
             return { success: true };
         }
@@ -482,7 +486,7 @@ ipcMain.handle('DOWNLOADS_REMOVE', async (_event, downloadId: number) => {
         // Cancel if active
         if (activeDownload && activeDownload.id === downloadId) {
             if (activeDownload.downloadItem) {
-                (activeDownload.downloadItem as any).cancel?.();
+                activeDownload.downloadItem.cancel?.();
             }
         }
 

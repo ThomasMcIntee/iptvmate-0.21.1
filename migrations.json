@@ -20,6 +20,7 @@
       "ref": "28c4bf0d9172d61766144aa6732fc16cb591b2d5",
       "subject": "update"
     },
-    "targetVersion": "next"
+    "targetVersion": "next",
+    "confirmedPackageUpdates": true
   }
 }

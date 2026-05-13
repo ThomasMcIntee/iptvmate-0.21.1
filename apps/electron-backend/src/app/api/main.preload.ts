@@ -1,57 +1,88 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { PlaybackPositionData, Playlist, Settings } from 'shared-interfaces';
+
+type ChannelChangeData = { direction: 'up' | 'down' };
+
+type RemoteControlCommandData = {
+    type:
+        | 'channel-select-number'
+        | 'volume-up'
+        | 'volume-down'
+        | 'volume-toggle-mute';
+    number?: number;
+};
+
+type RemoteControlStatus = {
+    portal: 'm3u' | 'xtream' | 'stalker' | 'unknown';
+    isLiveView: boolean;
+    channelName?: string;
+    channelNumber?: number;
+    epgTitle?: string;
+    epgStart?: string;
+    epgEnd?: string;
+    supportsVolume?: boolean;
+    volume?: number;
+    muted?: boolean;
+};
+
+type PlayerErrorData = {
+    player: string;
+    error: string;
+    originalError: string;
+};
+
+type EpgProgressData = {
+    url: string;
+    status: 'loading' | 'complete' | 'error';
+    stats?: { totalChannels: number; totalPrograms: number };
+    error?: string;
+};
+
+type PlayerLaunchContentInfo = Record<string, unknown>;
+
+type DbPlaylistRecord = Record<string, unknown>;
+
+type DbCategoryRecord = {
+    category_name: string;
+    category_id: number;
+};
 
 contextBridge.exposeInMainWorld('electron', {
     // Remote control channel change listener
-    onChannelChange: (
-        callback: (data: { direction: 'up' | 'down' }) => void
-    ) => {
-        const handler = (_event: Electron.IpcRendererEvent, data: any) =>
+    onChannelChange: (callback: (data: ChannelChangeData) => void) => {
+        const handler = (_event: Electron.IpcRendererEvent, data: ChannelChangeData) =>
             callback(data);
         ipcRenderer.on('CHANNEL_CHANGE', handler);
         return () => ipcRenderer.off('CHANNEL_CHANGE', handler);
     },
     onRemoteControlCommand: (
-        callback: (data: {
-            type:
-                | 'channel-select-number'
-                | 'volume-up'
-                | 'volume-down'
-                | 'volume-toggle-mute';
-            number?: number;
-        }) => void
+        callback: (data: RemoteControlCommandData) => void
     ) => {
-        const handler = (_event: Electron.IpcRendererEvent, data: any) =>
+        const handler = (
+            _event: Electron.IpcRendererEvent,
+            data: RemoteControlCommandData
+        ) =>
             callback(data);
         ipcRenderer.on('REMOTE_CONTROL_COMMAND', handler);
         return () => ipcRenderer.off('REMOTE_CONTROL_COMMAND', handler);
     },
-    updateRemoteControlStatus: (status: any) => {
+    updateRemoteControlStatus: (status: RemoteControlStatus) => {
         ipcRenderer.send('REMOTE_CONTROL_STATUS_UPDATE', status);
     },
     // Player error listener
-    onPlayerError: (
-        callback: (data: {
-            player: string;
-            error: string;
-            originalError: string;
-        }) => void
-    ) => {
+    onPlayerError: (callback: (data: PlayerErrorData) => void) => {
         ipcRenderer.on('player-error', (_event, data) => callback(data));
     },
     // EPG progress listener
-    onEpgProgress: (
-        callback: (data: {
-            url: string;
-            status: 'loading' | 'complete' | 'error';
-            stats?: { totalChannels: number; totalPrograms: number };
-            error?: string;
-        }) => void
-    ) => {
+    onEpgProgress: (callback: (data: EpgProgressData) => void) => {
         ipcRenderer.on('EPG_PROGRESS_UPDATE', (_event, data) => callback(data));
     },
     // Playback position update listener - returns unsubscribe function
-    onPlaybackPositionUpdate: (callback: (data: any) => void) => {
-        const handler = (_event: Electron.IpcRendererEvent, data: any) =>
+    onPlaybackPositionUpdate: (callback: (data: PlaybackPositionData) => void) => {
+        const handler = (
+            _event: Electron.IpcRendererEvent,
+            data: PlaybackPositionData
+        ) =>
             callback(data);
         ipcRenderer.on('playback-position-update', handler);
         return () => ipcRenderer.off('playback-position-update', handler);
@@ -97,7 +128,7 @@ contextBridge.exposeInMainWorld('electron', {
         userAgent: string,
         referer?: string,
         origin?: string,
-        contentInfo?: any,
+        contentInfo?: PlayerLaunchContentInfo,
         startTime?: number
     ) =>
         ipcRenderer.invoke(
@@ -116,7 +147,7 @@ contextBridge.exposeInMainWorld('electron', {
         userAgent: string,
         referer?: string,
         origin?: string,
-        contentInfo?: any,
+        contentInfo?: PlayerLaunchContentInfo,
         startTime?: number
     ) =>
         ipcRenderer.invoke(
@@ -129,7 +160,7 @@ contextBridge.exposeInMainWorld('electron', {
             contentInfo,
             startTime
         ),
-    autoUpdatePlaylists: (playlists: any) =>
+    autoUpdatePlaylists: (playlists: Playlist[]) =>
         ipcRenderer.invoke('AUTO_UPDATE', playlists),
     fetchEpg: (urls: string[]) =>
         ipcRenderer.invoke('FETCH_EPG', { url: urls }),
@@ -148,7 +179,7 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.invoke('SET_MPV_PLAYER_PATH', mpvPlayerPath),
     setVlcPlayerPath: (vlcPlayerPath: string) =>
         ipcRenderer.invoke('SET_VLC_PLAYER_PATH', vlcPlayerPath),
-    updateSettings: (settings: any) =>
+    updateSettings: (settings: Partial<Settings>) =>
         ipcRenderer.invoke('SETTINGS_UPDATE', settings),
     getAiSettings: () => ipcRenderer.invoke('GET_AI_SETTINGS'),
     stalkerRequest: (payload: {
@@ -160,13 +191,13 @@ contextBridge.exposeInMainWorld('electron', {
     xtreamRequest: (payload: { url: string; params: Record<string, string> }) =>
         ipcRenderer.invoke('XTREAM_REQUEST', payload),
     // Database operations
-    dbCreatePlaylist: (playlist: any) =>
+    dbCreatePlaylist: (playlist: DbPlaylistRecord) =>
         ipcRenderer.invoke('DB_CREATE_PLAYLIST', playlist),
     dbGetAllPlaylists: () =>
         ipcRenderer.invoke('DB_GET_ALL_PLAYLISTS'),
     dbGetPlaylist: (playlistId: string) =>
         ipcRenderer.invoke('DB_GET_PLAYLIST', playlistId),
-    dbUpdatePlaylist: (playlistId: string, updates: any) =>
+    dbUpdatePlaylist: (playlistId: string, updates: DbPlaylistRecord) =>
         ipcRenderer.invoke('DB_UPDATE_PLAYLIST', playlistId, updates),
     dbDeletePlaylist: (playlistId: string) =>
         ipcRenderer.invoke('DB_DELETE_PLAYLIST', playlistId),
@@ -189,7 +220,7 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.invoke('DB_GET_CATEGORIES', playlistId, type),
     dbSaveCategories: (
         playlistId: string,
-        categories: any[],
+        categories: DbCategoryRecord[],
         type: string,
         hiddenCategoryXtreamIds?: number[]
     ) =>
@@ -212,7 +243,11 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.invoke('DB_HAS_CONTENT', playlistId, type),
     dbGetContent: (playlistId: string, type: string) =>
         ipcRenderer.invoke('DB_GET_CONTENT', playlistId, type),
-    dbSaveContent: (playlistId: string, streams: any[], type: string) =>
+    dbSaveContent: (
+        playlistId: string,
+        streams: Array<Record<string, unknown>>,
+        type: string
+    ) =>
         ipcRenderer.invoke('DB_SAVE_CONTENT', playlistId, streams, type),
     dbSearchContent: (
         playlistId: string,
@@ -246,7 +281,7 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.invoke('DB_GET_CONTENT_BY_XTREAM_ID', xtreamId, playlistId),
     dbDeleteAllPlaylists: () => ipcRenderer.invoke('DB_DELETE_ALL_PLAYLISTS'),
     // Playback Positions
-    dbSavePlaybackPosition: (playlistId: string, data: any) =>
+    dbSavePlaybackPosition: (playlistId: string, data: PlaybackPositionData) =>
         ipcRenderer.invoke('DB_SAVE_PLAYBACK_POSITION', playlistId, data),
     dbGetPlaybackPosition: (
         playlistId: string,

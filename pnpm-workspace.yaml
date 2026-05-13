@@ -1,3 +1,18 @@
+allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
+  better-sqlite3: true
+  electron: true
+  electron-winstaller: false
+  esbuild: false
+  ffmpeg-static: false
+  less: false
+  lmdb: false
+  msgpackr-extract: false
+  nx: false
+  sharp: false
+  unrs-resolver: false
+
 ignoredBuiltDependencies:
   - '@parcel/watcher'
   - '@swc/core'

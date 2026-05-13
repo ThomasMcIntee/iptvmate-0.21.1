@@ -29,6 +29,9 @@ app.commandLine.appendSwitch('ignore-certificate-errors');
 app.commandLine.appendSwitch('ignore-ssl-errors');
 app.commandLine.appendSwitch('ssl-version-min', 'tls1');
 
+// Enable platform HEVC/H.265 hardware decoder support (Windows/macOS)
+app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport');
+
 let streamProxyStartPromise: Promise<number> | null = null;
 
 async function ensureStreamProxyStarted(): Promise<number> {
@@ -102,5 +105,9 @@ Main.bootstrapApp();
 
 // Bootstrap app events after Electron app is ready
 app.whenReady().then(async () => {
-    await Main.bootstrapAppEvents();
+    try {
+        await Main.bootstrapAppEvents();
+    } catch (error) {
+        console.error('Failed to bootstrap app events:', error);
+    }
 });

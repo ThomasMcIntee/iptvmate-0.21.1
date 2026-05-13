@@ -34,7 +34,10 @@ export default class App {
         App.mainWindow = null;
     }
 
-    private static onRedirect(event: any, url: string) {
+    private static onRedirect(
+        event: { preventDefault: () => void },
+        url: string
+    ) {
         if (App.mainWindow && url !== App.mainWindow.webContents.getURL()) {
             // this is a normal external redirect, open it in a new browser window
             event.preventDefault();
@@ -95,14 +98,28 @@ export default class App {
                   }
                 : {}),
         });
-        App.mainWindow!.setMenu(null);
+        const mainWindow = App.mainWindow;
+
+        if (!mainWindow) {
+            return;
+        }
+
+        mainWindow.setMenu(null);
         if (!savedWindowBounds) {
-            App.mainWindow!.center();
+            mainWindow.center();
         }
 
         // if main window is ready to show, close the splash window and show the main window
-        App.mainWindow!.once('ready-to-show', () => {
-            App.mainWindow!.show();
+        mainWindow.once('ready-to-show', () => {
+            // In development, delay showing until content loads
+            if (App.isDevelopmentMode()) {
+                // Show after a delay to allow retry to succeed
+                setTimeout(() => {
+                    mainWindow.show();
+                }, 4000);
+            } else {
+                mainWindow.show();
+            }
         });
 
         // handle all external redirects in a new browser window
@@ -112,21 +129,21 @@ export default class App {
         // });
 
         // Emitted when the window is closed.
-        App.mainWindow!.on('closed', () => {
+        mainWindow.on('closed', () => {
             // Dereference the window object, usually you would store windows
             // in an array if your app supports multi windows, this is the time
             // when you should delete the corresponding element.
             App.mainWindow = null;
         });
 
-        App.mainWindow!.on('close', () => {
+        mainWindow.on('close', () => {
             if (App.mainWindow) {
                 store.set(WINDOW_BOUNDS, App.mainWindow.getNormalBounds());
             }
         });
 
         // Enable context menu for input fields only
-        App.mainWindow!.webContents.on('context-menu', (event, params) => {
+        mainWindow.webContents.on('context-menu', (_event, params) => {
             const { isEditable, editFlags } = params;
 
             // Check if this is an editable field (input, textarea, contenteditable)
@@ -164,21 +181,26 @@ export default class App {
     }
 
     private static loadMainWindow() {
+        const mainWindow = App.mainWindow;
+
+        if (!mainWindow) {
+            return;
+        }
+
         // load the index.html of the app.
         if (App.isDevelopmentMode()) {
             const url = `http://localhost:${rendererAppPort}`;
             const tryLoad = () => {
-                App.mainWindow!.loadURL(url).catch(() => {
+                mainWindow.loadURL(url).catch(() => {
                     // Angular dev server not ready yet – retry after 1s
                     setTimeout(tryLoad, 1000);
                 });
             };
-            tryLoad();
-            App.mainWindow!.webContents.openDevTools();
+            // Wait 3s for dev server to start before first attempt
+            setTimeout(tryLoad, 3000);
+            mainWindow.webContents.openDevTools();
         } else {
-            App.mainWindow!.loadFile(
-                join(__dirname, '..', rendererAppName, 'index.html')
-            );
+            mainWindow.loadFile(join(__dirname, '..', rendererAppName, 'index.html'));
         }
     }
 

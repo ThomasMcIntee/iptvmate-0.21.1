@@ -1,7 +1,10 @@
 import * as http from 'http';
 import * as https from 'https';
+import * as fs from 'fs';
+import { spawn } from 'child_process';
 import { IncomingMessage, ServerResponse } from 'http';
 import { URL } from 'url';
+import ffmpegPath from 'ffmpeg-static';
 
 const M3U8_CONTENT_TYPES = [
     'application/x-mpegurl',
@@ -10,6 +13,9 @@ const M3U8_CONTENT_TYPES = [
 ];
 
 const STREAM_PROXY_VERSION = '2026-04-28-r3';
+const FFMPEG_BIN = typeof ffmpegPath === 'string' ? ffmpegPath : null;
+const HAS_WORKING_FFMPEG = !!FFMPEG_BIN && fs.existsSync(FFMPEG_BIN);
+let ffmpegUnavailableLogged = false;
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
 const MAX_REDIRECTS = 10;
@@ -40,7 +46,7 @@ function rewriteM3u8(
             if (trimmed.startsWith('#')) {
                 // Rewrite URI values inside EXT-X-KEY, EXT-X-MAP etc.
                 return line.replace(
-                    /URI="([^\"]+)"/g,
+                    /URI="([^"]+)"/g,
                     (_m, rawUri) => {
                         const target = resolveHttpTarget(rawUri, manifestUrl);
                         if (!target) {
@@ -66,6 +72,128 @@ function rewriteM3u8(
 let proxyPort: number | null = null;
 let proxyServer: http.Server | null = null;
 
+function maybeTranscodeResponse(
+    req: IncomingMessage,
+    res: ServerResponse,
+    proxyRes: IncomingMessage,
+    sourceUrl: string
+): boolean {
+    if (!HAS_WORKING_FFMPEG || !FFMPEG_BIN) {
+        if (!ffmpegUnavailableLogged) {
+            ffmpegUnavailableLogged = true;
+            console.warn(
+                `[StreamProxy] ffmpeg binary unavailable (${FFMPEG_BIN ?? 'no ffmpeg path'}); serving source without transcoding`
+            );
+        }
+        return false;
+    }
+
+    const statusCode = proxyRes.statusCode ?? 0;
+    if (statusCode < 200 || statusCode >= 300) {
+        return false;
+    }
+
+    console.log(`[StreamProxy] transcoding to H.264/AAC: ${sourceUrl}`);
+
+    const responseHeaders: http.OutgoingHttpHeaders = {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'GET, HEAD, OPTIONS',
+        'access-control-allow-headers': 'Range, Content-Type',
+        'cache-control': 'no-store',
+        'content-type': 'video/mp4',
+        'transfer-encoding': 'chunked',
+    };
+
+    res.writeHead(200, responseHeaders);
+
+    const ffmpeg = spawn(
+        FFMPEG_BIN,
+        [
+            '-hide_banner',
+            '-loglevel',
+            'error',
+            '-i',
+            'pipe:0',
+            '-map',
+            '0:v:0?',
+            '-map',
+            '0:a:0?',
+            '-sn',
+            '-dn',
+            '-c:v',
+            'libx264',
+            '-preset',
+            'veryfast',
+            '-pix_fmt',
+            'yuv420p',
+            '-c:a',
+            'aac',
+            '-b:a',
+            '128k',
+            '-movflags',
+            'frag_keyframe+empty_moov+default_base_moof',
+            '-f',
+            'mp4',
+            'pipe:1',
+        ],
+        {
+            windowsHide: true,
+            stdio: ['pipe', 'pipe', 'pipe'],
+        }
+    );
+
+    let ffmpegErrorOutput = '';
+    ffmpeg.stderr.on('data', (chunk: Buffer) => {
+        ffmpegErrorOutput += chunk.toString('utf8');
+        if (ffmpegErrorOutput.length > 8000) {
+            ffmpegErrorOutput = ffmpegErrorOutput.slice(-8000);
+        }
+    });
+
+    const terminateFfmpeg = () => {
+        if (!ffmpeg.killed) {
+            ffmpeg.kill('SIGKILL');
+        }
+    };
+
+    req.on('close', terminateFfmpeg);
+    res.on('close', terminateFfmpeg);
+    proxyRes.on('error', terminateFfmpeg);
+
+    ffmpeg.on('error', (error) => {
+        console.error('[StreamProxy] ffmpeg spawn failed:', error);
+        if (!res.headersSent) {
+            res.writeHead(502);
+            res.end('Transcoding failed');
+        }
+    });
+
+    ffmpeg.on('close', (code) => {
+        if (code !== 0) {
+            console.error(
+                `[StreamProxy] ffmpeg exited with code ${code}. ${ffmpegErrorOutput}`
+            );
+            if (!res.writableEnded) {
+                res.end();
+            }
+            return;
+        }
+
+        if (!res.writableEnded) {
+            res.end();
+        }
+    });
+
+    ffmpeg.stdin.on('error', () => {
+        // Ignore broken pipe errors when client disconnects.
+    });
+
+    proxyRes.pipe(ffmpeg.stdin);
+    ffmpeg.stdout.pipe(res);
+
+    return true;
+}
+
 function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
     const reqUrl = req.url || '';
     const searchStart = reqUrl.indexOf('?');
@@ -77,6 +205,7 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
 
     const params = new URLSearchParams(reqUrl.slice(searchStart + 1));
     const targetUrl = params.get('url');
+    const shouldTranscode = params.get('transcode') === '1';
 
     if (!targetUrl) {
         res.writeHead(400);
@@ -159,6 +288,18 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
                 );
             }
 
+            if (shouldTranscode && req.method === 'GET') {
+                const didStartTranscoding = maybeTranscodeResponse(
+                    req,
+                    res,
+                    proxyRes,
+                    currentTarget.toString()
+                );
+                if (didStartTranscoding) {
+                    return;
+                }
+            }
+
             const responseHeaders: http.OutgoingHttpHeaders = {};
             for (const [k, v] of Object.entries(proxyRes.headers)) {
                 if (v !== undefined) responseHeaders[k] = v;
@@ -169,12 +310,14 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
 
             // Allow renderer to use this resource
             responseHeaders['access-control-allow-origin'] = '*';
+            responseHeaders['access-control-allow-methods'] = 'GET, HEAD, OPTIONS';
+            responseHeaders['access-control-allow-headers'] = 'Range, Content-Type';
 
             const contentType = (
                 proxyRes.headers['content-type'] || ''
             ).toLowerCase();
             console.log(
-                `[StreamProxy] <- ${statusCode} ${contentType || 'unknown'}`
+                `[StreamProxy] <- ${statusCode} ${contentType || 'unknown'} (content-length: ${proxyRes.headers['content-length'] || 'unknown'}, content-range: ${proxyRes.headers['content-range'] || 'none'})`
             );
             const isM3u8 = M3U8_CONTENT_TYPES.some((t) =>
                 contentType.includes(t)
@@ -231,8 +374,13 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
 
 export function startStreamProxy(): Promise<number> {
     return new Promise((resolve, reject) => {
+        if (proxyServer && proxyPort !== null) {
+            resolve(proxyPort);
+            return;
+        }
+
         if (proxyServer) {
-            resolve(proxyPort!);
+            reject(new Error('Stream proxy server exists without a bound port'));
             return;
         }
 

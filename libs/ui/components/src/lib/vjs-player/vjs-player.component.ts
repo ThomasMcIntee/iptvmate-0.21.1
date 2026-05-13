@@ -17,6 +17,10 @@ import 'videojs-quality-selector-hls';
 
 type PlayerSource = { src: string; type?: string };
 
+type ElectronApi = {
+    getStreamProxyPort?: () => Promise<number>;
+};
+
 /**
  * This component contains the implementation of video player that is based on video.js library
  */
@@ -47,6 +51,7 @@ export class VjsPlayerComponent
     private pendingSources: PlayerSource[] | null = null;
     private isDestroyed = false;
     private lastAppliedSourcesKey: string | null = null;
+    private shouldRequestProxyTranscode = false;
 
     ngAfterViewInit(): void {
         this.initializePlayer();
@@ -61,6 +66,19 @@ export class VjsPlayerComponent
         if (!playerElement?.isConnected) {
             return;
         }
+
+        // Log codec support to diagnose playback issues
+        const testVideo = document.createElement('video');
+        const hevc = testVideo.canPlayType('video/mp4; codecs="hvc1"');
+        const hevcAlt = testVideo.canPlayType('video/mp4; codecs="hev1"');
+        this.shouldRequestProxyTranscode = !hevc && !hevcAlt;
+        console.log('[VjsPlayer] Codec support:', {
+            h264: testVideo.canPlayType('video/mp4; codecs="avc1.42E01E"'),
+            hevc,
+            hevcAlt,
+            av1: testVideo.canPlayType('video/mp4; codecs="av01.0.08M.08"'),
+            requestProxyTranscode: this.shouldRequestProxyTranscode,
+        });
 
         const initialSources = this.normalizeSources(
             this.pendingSources ?? this.options?.sources
@@ -234,7 +252,8 @@ export class VjsPlayerComponent
 
     private setPlayerSource(
         sourcesInput: PlayerSource[] | PlayerSource,
-        allowTypeFallback = true
+        allowTypeFallback = true,
+        allowProxyFallback = true
     ): void {
         if (!this.player) {
             return;
@@ -247,9 +266,19 @@ export class VjsPlayerComponent
 
         const nextSourcesKey = this.getSourcesKey(normalizedSources);
         if (this.lastAppliedSourcesKey === nextSourcesKey) {
+            console.log('Source already applied, skipping duplicate:', nextSourcesKey);
             return;
         }
         this.lastAppliedSourcesKey = nextSourcesKey;
+
+        console.log(
+            'Setting player source:',
+            normalizedSources,
+            'allowTypeFallback:',
+            allowTypeFallback,
+            'allowProxyFallback:',
+            allowProxyFallback
+        );
 
         if (
             allowTypeFallback &&
@@ -264,14 +293,77 @@ export class VjsPlayerComponent
                         'VideoJS source not supported with explicit type; retrying without type.',
                         typedSource
                     );
-                    this.setPlayerSource({ src: typedSource.src }, false);
+                    this.setPlayerSource(
+                        { src: typedSource.src },
+                        false,
+                        allowProxyFallback
+                    );
                 }
             };
 
             this.player.one('error', onSourceError);
         }
 
+        if (allowProxyFallback && normalizedSources.length === 1) {
+            const directSource = normalizedSources[0];
+            const isHttpSource = /^https?:\/\//i.test(directSource.src);
+            const isAlreadyProxied = directSource.src.includes('/stream?url=');
+
+            console.log(
+                'Checking proxy fallback:',
+                'isHttpSource:',
+                isHttpSource,
+                'isAlreadyProxied:',
+                isAlreadyProxied
+            );
+
+            if (isHttpSource && !isAlreadyProxied) {
+                const onProxyFallbackError = async () => {
+                    const currentError = this.player?.error();
+                    if (currentError?.code !== 4) {
+                        console.warn(
+                            'Proxy fallback skipped - error code is not 4:',
+                            currentError?.code,
+                            currentError?.message
+                        );
+                        return;
+                    }
+
+                    // Type fallback has already been attempted (or wasn't needed).
+                    // Now try proxy fallback for Code 4 errors.
+
+                    const proxiedUrl = await this.buildProxyUrl(
+                        directSource.src,
+                        directSource.type
+                    );
+                    if (!proxiedUrl) {
+                        console.error(
+                            'Failed to build proxy URL - no proxy port available'
+                        );
+                        return;
+                    }
+
+                    console.warn(
+                        'VideoJS direct source failed; retrying via local stream proxy.'
+                    );
+                    console.warn('Original URL:', directSource.src);
+                    console.warn('Proxy URL:', proxiedUrl);
+                    console.warn('Source type:', directSource.type);
+                    this.setPlayerSource(
+                        { src: proxiedUrl, type: directSource.type },
+                        true,
+                        false
+                    );
+                };
+
+                this.player.one('error', () => {
+                    void onProxyFallbackError();
+                });
+            }
+        }
+
         this.player.pause();
+        console.log('Calling player.src() with:', normalizedSources);
         this.player.src(normalizedSources as Parameters<typeof this.player.src>[0]);
         this.player.load();
 
@@ -291,6 +383,48 @@ export class VjsPlayerComponent
                 console.warn('VideoJS failed to autoplay after source switch:', err);
             });
         }
+    }
+
+    private async buildProxyUrl(
+        sourceUrl: string,
+        sourceType?: string
+    ): Promise<string | null> {
+        const electronApi = (globalThis as { electron?: ElectronApi }).electron;
+        if (!electronApi?.getStreamProxyPort) {
+            return null;
+        }
+
+        try {
+            const port = await electronApi.getStreamProxyPort();
+            if (!port) {
+                return null;
+            }
+
+            const params = new URLSearchParams({ url: sourceUrl });
+            if (this.shouldTranscodeProxySource(sourceUrl, sourceType)) {
+                params.set('transcode', '1');
+            }
+            return `http://127.0.0.1:${port}/stream?${params.toString()}`;
+        } catch {
+            return null;
+        }
+    }
+
+    private shouldTranscodeProxySource(
+        sourceUrl: string,
+        sourceType?: string
+    ): boolean {
+        if (!this.shouldRequestProxyTranscode) {
+            return false;
+        }
+
+        if (sourceType?.toLowerCase().includes('mp4')) {
+            return true;
+        }
+
+        return /\.(mp4|m4v|mov|mkv|avi|wmv|mpeg|mpg|ts)(\?|$)/i.test(
+            sourceUrl
+        );
     }
 
     /**

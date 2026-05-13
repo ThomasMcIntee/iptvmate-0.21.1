@@ -9,7 +9,7 @@ import { parse } from 'iptv-playlist-parser';
 import { createPlaylistObject, getFilenameFromUrl } from 'm3u-utils';
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
-import { AUTO_UPDATE_PLAYLISTS } from 'shared-interfaces';
+import { AUTO_UPDATE_PLAYLISTS, type Playlist } from 'shared-interfaces';
 
 export default class PlaylistEvents {
     static bootstrapPlaylistEvents(): Electron.IpcMain {
@@ -28,7 +28,7 @@ const https = require('https');
 async function fetchPlaylistFromUrl(
     url: string,
     title?: string
-): Promise<any> {
+): Promise<Playlist> {
     const agent = new https.Agent({
         rejectUnauthorized: false,
     });
@@ -61,7 +61,7 @@ async function fetchPlaylistFromUrl(
 async function fetchPlaylistFromFile(
     filePath: string,
     title: string
-): Promise<any> {
+): Promise<Playlist> {
     const fileContent = await readFile(filePath, 'utf-8');
     const parsedPlaylist = parse(fileContent);
     const playlistObject = createPlaylistObject(
@@ -118,7 +118,7 @@ ipcMain.handle('open-playlist-from-file', async () => {
         return await fetchPlaylistFromFile(filePath, title);
     } catch (error) {
         console.error('Error reading or parsing the file:', error);
-        throw new Error('Failed to process the selected file.');
+        throw error;
     }
 });
 
