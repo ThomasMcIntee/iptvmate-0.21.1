@@ -126,7 +126,7 @@
             "options": {
                 "buildTarget": "web:build",
                 "port": 4200,
-                "staticFilePath": "dist/apps/web/browser",
+                "staticFilePath": "dist/apps/web",
                 "spa": true
             }
         }

@@ -301,7 +301,8 @@ export class ArtPlayerComponent implements OnInit, OnDestroy, OnChanges {
         const sourceUrl = this.ensureProxiedLiveUrl(url);
         const m3u8Url = this.getM3u8VariantUrl(sourceUrl);
 
-        if (m3u8Url) {
+        // Prefer HLS manifests as first choice for ArtPlayer/Hls.js.
+        if (m3u8Url && m3u8Url !== sourceUrl) {
             candidates.push(m3u8Url);
         }
 
@@ -383,14 +384,6 @@ export class ArtPlayerComponent implements OnInit, OnDestroy, OnChanges {
                     outer.searchParams.set('url', replacedNested);
                     return outer.toString();
                 }
-                if (
-                    lowerNested.includes('/live/') &&
-                    m3u8Regex.test(lowerNested)
-                ) {
-                    const replacedNested = decodedNested.replace(m3u8Regex, '.ts');
-                    outer.searchParams.set('url', replacedNested);
-                    return outer.toString();
-                }
 
                 if (lowerNested.includes('/live/play/')) {
                     const hlsNested = appendM3u8ToLivePlayPath(decodedNested);
@@ -407,10 +400,6 @@ export class ArtPlayerComponent implements OnInit, OnDestroy, OnChanges {
         const lower = url.toLowerCase();
         if (lower.includes('/live/') && tsRegex.test(lower)) {
             return url.replace(tsRegex, '.m3u8');
-        }
-
-        if (lower.includes('/live/') && m3u8Regex.test(lower)) {
-            return url.replace(m3u8Regex, '.ts');
         }
 
         if (lower.includes('/live/play/')) {

@@ -77,7 +77,7 @@
                 matBadgeColor="accent"
                 data-test-id="filter-sort-playlists"
             >
-                <mat-icon>tune</mat-icon>
+                <mat-icon aria-hidden="false">tune</mat-icon>
             </button>
             <app-filter-sort-menu [menuTrigger]="filterMenuTrigger" />
             @if (isDesktop) {
@@ -215,6 +215,7 @@
                         [matBadgeHidden]="filterSortMenuComponent().activeFiltersCount === 0"
                         matBadgeSize="small"
                         matBadgeColor="accent"
+                        aria-hidden="false"
                     >tune</mat-icon>
                     <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
                 </button>

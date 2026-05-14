@@ -50,6 +50,14 @@ export default class App {
         // initialization and is ready to create browser windows.
         // Some APIs can only be used after this event occurs.
 
+        if (App.mainWindow && !App.mainWindow.isDestroyed()) {
+            if (App.mainWindow.isMinimized()) {
+                App.mainWindow.restore();
+            }
+            App.mainWindow.focus();
+            return;
+        }
+
         // Allow IPTV stream servers with non-standard TLS configurations
         // (e.g. outdated cipher suites) by bypassing certificate verification.
         session.defaultSession.setCertificateVerifyProc((_request, callback) => {
@@ -71,6 +79,10 @@ export default class App {
     }
 
     private static initMainWindow() {
+        if (App.mainWindow && !App.mainWindow.isDestroyed()) {
+            return;
+        }
+
         const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
         const width = Math.min(1280, workAreaSize.width || 1280);
         const height = Math.min(720, workAreaSize.height || 720);
@@ -127,6 +139,14 @@ export default class App {
         // App.mainWindow.webContents.on('new-window', (event, url, frameName, disposition, options) => {
         //     App.onRedirect(event, url);
         // });
+
+        // Block renderer popups/new windows and route external URLs to system browser.
+        mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+            if (url && /^https?:\/\//i.test(url)) {
+                void shell.openExternal(url);
+            }
+            return { action: 'deny' };
+        });
 
         // Emitted when the window is closed.
         mainWindow.on('closed', () => {
@@ -198,7 +218,9 @@ export default class App {
             };
             // Wait 3s for dev server to start before first attempt
             setTimeout(tryLoad, 3000);
-            mainWindow.webContents.openDevTools();
+            if (process.env.ELECTRON_OPEN_DEVTOOLS === '1') {
+                mainWindow.webContents.openDevTools({ mode: 'bottom' });
+            }
         } else {
             mainWindow.loadFile(join(__dirname, '..', rendererAppName, 'index.html'));
         }
@@ -216,6 +238,19 @@ export default class App {
         App.application.on('window-all-closed', App.onWindowAllClosed); // Quit when all windows are closed.
         App.application.on('ready', App.onReady); // App is ready to load data
         App.application.on('activate', App.onActivate); // App is activated
+        App.application.on('browser-window-created', (_event, window) => {
+            if (!App.mainWindow || window === App.mainWindow) {
+                return;
+            }
+
+            if (App.mainWindow.isMinimized()) {
+                App.mainWindow.restore();
+            }
+            App.mainWindow.focus();
+
+            // Defensive guard: this app is intended to run with a single main window.
+            window.close();
+        });
         App.application.on('before-quit', () => {
             if (App.mainWindow)
                 store.set(WINDOW_BOUNDS, App.mainWindow.getNormalBounds());

@@ -123,10 +123,10 @@ export class SettingsComponent implements OnInit {
     ];
 
     /** Current version of the app */
-    version: string;
+    version = '';
 
     /** Update message to show */
-    updateMessage: string;
+    updateMessage = '';
 
     /** EPG availability flag */
     epgAvailable$ = this.store.select(selectIsEpgAvailable);
@@ -184,6 +184,7 @@ export class SettingsComponent implements OnInit {
         // Wait for settings to load before setting the form
         await this.settingsStore.loadSettings();
         this.setSettings();
+        this.version = this.dataService.getAppVersion();
         this.checkAppVersion();
         this.fetchLocalIpAddresses();
     }
@@ -250,7 +251,10 @@ export class SettingsComponent implements OnInit {
             .getAppVersion()
             .pipe(take(1))
             .subscribe((version) => {
-                if (!version) {
+                if (!version || !this.version) {
+                    this.updateMessage = this.translate.instant(
+                        'SETTINGS.LATEST_VERSION'
+                    );
                     return;
                 }
                 this.showVersionInformation(version);

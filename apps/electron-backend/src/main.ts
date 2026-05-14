@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import fixPath from 'fix-path';
+import { join } from 'path';
 import App from './app/app';
 import { initDatabase } from './app/database/connection';
 import {
@@ -24,6 +25,13 @@ import XtreamEvents from './app/events/xtream.events';
 
 app.setName('iptvmate');
 
+// Keep userData path stable in development so single-instance lock works reliably
+// across repeated Nx/Electron launches.
+if (!app.isPackaged) {
+    process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+    app.setPath('userData', join(app.getPath('appData'), 'iptvmate-dev'));
+}
+
 // Allow IPTV stream servers with outdated TLS versions/cipher suites
 app.commandLine.appendSwitch('ignore-certificate-errors');
 app.commandLine.appendSwitch('ignore-ssl-errors');
@@ -31,6 +39,66 @@ app.commandLine.appendSwitch('ssl-version-min', 'tls1');
 
 // Enable platform HEVC/H.265 hardware decoder support (Windows/macOS)
 app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport');
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+    app.quit();
+}
+
+let primaryWindowId: number | null = null;
+
+app.on('browser-window-created', (_event, window) => {
+    if (primaryWindowId === null) {
+        primaryWindowId = window.id;
+        console.log(`[Main] Registered primary BrowserWindow id=${window.id}`);
+        return;
+    }
+
+    if (window.id === primaryWindowId) {
+        return;
+    }
+
+    const primaryWindow = BrowserWindow.fromId(primaryWindowId);
+    if (primaryWindow && !primaryWindow.isDestroyed()) {
+        if (primaryWindow.isMinimized()) {
+            primaryWindow.restore();
+        }
+        if (!primaryWindow.isVisible()) {
+            primaryWindow.show();
+        }
+        primaryWindow.focus();
+    }
+
+    console.warn(
+        `[Main] Closing unexpected BrowserWindow id=${window.id}; primary=${primaryWindowId}`
+    );
+    window.close();
+});
+
+app.on('second-instance', () => {
+    const mainWindow = App.mainWindow;
+    if (!mainWindow) {
+        return;
+    }
+
+    if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+    }
+    if (!mainWindow.isVisible()) {
+        mainWindow.show();
+    }
+    mainWindow.focus();
+});
+
+// Block popup/new-window creation globally for all renderer contents.
+app.on('web-contents-created', (_event, contents) => {
+    contents.setWindowOpenHandler(({ url }) => {
+        if (url && /^https?:\/\//i.test(url)) {
+            void shell.openExternal(url);
+        }
+        return { action: 'deny' };
+    });
+});
 
 let streamProxyStartPromise: Promise<number> | null = null;
 
@@ -100,14 +168,16 @@ fixPath();
 // handle setup events as quickly as possible
 Main.initialize();
 
-// bootstrap app
-Main.bootstrapApp();
+if (hasSingleInstanceLock) {
+    // bootstrap app
+    Main.bootstrapApp();
 
-// Bootstrap app events after Electron app is ready
-app.whenReady().then(async () => {
-    try {
-        await Main.bootstrapAppEvents();
-    } catch (error) {
-        console.error('Failed to bootstrap app events:', error);
-    }
-});
+    // Bootstrap app events after Electron app is ready
+    app.whenReady().then(async () => {
+        try {
+            await Main.bootstrapAppEvents();
+        } catch (error) {
+            console.error('Failed to bootstrap app events:', error);
+        }
+    });
+}

@@ -51,7 +51,7 @@ export class VodDetailsRouteComponent implements OnInit, OnDestroy {
     private readonly downloadsService = inject(DownloadsService);
     private readonly openSubtitles = inject(OpenSubtitlesService);
     private readonly logger = createLogger('VodDetailsRoute');
-    private readonly detailsInitDone = signal(false);
+    private detailsInitialized = false;
 
     readonly theme = this.settingsStore.theme;
     readonly isElectron = this.downloadsService.isAvailable;
@@ -92,13 +92,15 @@ export class VodDetailsRouteComponent implements OnInit, OnDestroy {
     });
 
     constructor() {
-        // Route can initialize before currentPlaylist signal is ready.
-        // Retry initialization once playlist becomes available.
+        // Retry initialization when playlist becomes available.
+        // This effect runs if ngOnInit deferred initialization due to missing playlist.
         effect(() => {
+            if (this.detailsInitialized) return;
             const playlistId = this.xtreamStore.currentPlaylist()?.id;
-            if (!playlistId || this.detailsInitDone()) return;
+            if (!playlistId) return;
+            this.logger.debug('Playlist now available, initializing VOD details');
             this.initializeVodDetails(playlistId);
-            this.detailsInitDone.set(true);
+            this.detailsInitialized = true;
         });
     }
 
@@ -109,7 +111,7 @@ export class VodDetailsRouteComponent implements OnInit, OnDestroy {
             return;
         }
         this.initializeVodDetails(currentPlaylist.id);
-        this.detailsInitDone.set(true);
+        this.detailsInitialized = true;
     }
 
     ngOnDestroy() {

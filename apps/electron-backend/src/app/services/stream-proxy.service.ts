@@ -1,6 +1,15 @@
 import * as http from 'http';
 import * as https from 'https';
+import * as tls from 'tls';
 import * as fs from 'fs';
+
+// Permissive TLS options for IPTV providers with legacy SSL/TLS configurations.
+// Many IPTV CDNs use TLS 1.0/1.1 or old cipher suites that Node.js 18+ rejects by default.
+const PERMISSIVE_TLS_OPTIONS: https.RequestOptions = {
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1' as tls.SecureVersion,
+    ciphers: 'DEFAULT:@SECLEVEL=0',
+};
 import { spawn } from 'child_process';
 import { IncomingMessage, ServerResponse } from 'http';
 import { URL } from 'url';
@@ -13,7 +22,7 @@ const M3U8_CONTENT_TYPES = [
     'audio/mpegurl',
 ];
 
-const STREAM_PROXY_VERSION = '2026-04-28-r3';
+const STREAM_PROXY_VERSION = '2026-05-14-r6';
 const FFMPEG_STATIC_BIN = typeof ffmpegPath === 'string' ? ffmpegPath : null;
 const FFMPEG_INSTALLER_BIN =
     typeof ffmpegInstaller?.path === 'string' ? ffmpegInstaller.path : null;
@@ -118,7 +127,7 @@ function maybeTranscodeResponse(
         'access-control-allow-methods': 'GET, HEAD, OPTIONS',
         'access-control-allow-headers': 'Range, Content-Type',
         'cache-control': 'no-store',
-        'content-type': 'video/mp4',
+        'content-type': 'video/mp2t',
         'transfer-encoding': 'chunked',
     };
 
@@ -130,6 +139,10 @@ function maybeTranscodeResponse(
             '-hide_banner',
             '-loglevel',
             'error',
+            '-probesize',
+            '10M',
+            '-analyzeduration',
+            '20M',
             '-i',
             'pipe:0',
             '-map',
@@ -142,24 +155,28 @@ function maybeTranscodeResponse(
             'libx264',
             '-preset',
             'veryfast',
-            '-tune',
-            'zerolatency',
+            '-profile:v',
+            'main',
+            '-level:v',
+            '4.1',
             '-pix_fmt',
             'yuv420p',
-            '-g',
-            '48',
-            '-keyint_min',
-            '48',
-            '-sc_threshold',
-            '0',
             '-c:a',
             'aac',
             '-b:a',
             '128k',
-            '-movflags',
-            'frag_keyframe+empty_moov+default_base_moof',
+            '-ac',
+            '2',
+            '-ar',
+            '48000',
+            '-max_muxing_queue_size',
+            '4096',
+            '-muxdelay',
+            '0',
+            '-muxpreload',
+            '0',
             '-f',
-            'mp4',
+            'mpegts',
             'pipe:1',
         ],
         {
@@ -254,7 +271,9 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
         return;
     }
 
-    console.log(`[StreamProxy] -> ${targetUrl}`);
+    console.log(
+        `[StreamProxy] ${req.method ?? 'GET'} -> ${targetUrl} (transcode=${shouldTranscode ? '1' : '0'})`
+    );
 
     let target: URL;
     try {
@@ -272,6 +291,8 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
         // Full-file upstream input keeps ffmpeg output stable for progressive playback.
         skipHeaders.add('range');
         skipHeaders.add('if-range');
+        // Avoid gzip/br encoded payloads which ffmpeg cannot decode as media bytes.
+        skipHeaders.add('accept-encoding');
     }
     for (const [k, v] of Object.entries(req.headers)) {
         if (!skipHeaders.has(k.toLowerCase()) && v !== undefined) {
@@ -299,7 +320,7 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
                 ...forwardHeaders,
                 host: currentTarget.host,
             },
-            rejectUnauthorized: false,
+            ...(isHttps ? PERMISSIVE_TLS_OPTIONS : {}),
         };
 
         const proxyReq = transport.request(options, (proxyRes) => {
@@ -396,7 +417,10 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
             }
         });
 
-        proxyReq.on('error', (err) => {
+        proxyReq.on('error', (err: NodeJS.ErrnoException) => {
+            console.error(
+                `[StreamProxy] proxy error for ${currentTarget.host}${currentTarget.pathname}: ${err.code} - ${err.message}`
+            );
             if (!res.headersSent) {
                 res.writeHead(502);
             }

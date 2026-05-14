@@ -81,12 +81,19 @@ export class WebPlayerViewComponent {
             extension === 'm3u8' ||
             extension === 'm3u' ||
             extension === 'ts';
+        const isMovieOrSeries =
+            effectiveSource.includes('/movie/') ||
+            effectiveSource.includes('/series/');
         const isProxied = streamUrl.includes('/stream?url=');
 
-        // For proxied VOD/series, prefer the plain HTML5 element in browser mode.
-        // This avoids player-layer regressions where Video.js/ArtPlayer can render audio-only.
-        if (isProxied && !isLiveLike) {
+        // Movie/series VOD renders correctly via native HTML5 in Electron while
+        // Video.js/ArtPlayer can become audio-only for the same URLs.
+        if (isMovieOrSeries) {
             this.forceHtml5Fallback = true;
+            this.forceVideoJsFallback = false;
+        } else if (isProxied && !isLiveLike) {
+            this.forceHtml5Fallback = false;
+            this.forceVideoJsFallback = true;
         } else if (this.player === VideoPlayer.ArtPlayer && isLiveLike) {
             this.forceVideoJsFallback = false;
         }
@@ -215,6 +222,13 @@ export class WebPlayerViewComponent {
             effectiveSource.includes('/live/') ||
             effectiveSource.includes('/live/play/');
         const isProxied = sourceHint.includes('/stream?url=');
+        const isTranscodedProxy =
+            isProxied && sourceHint.includes('transcode=1');
+
+        if (isTranscodedProxy) {
+            // Force TS MIME so Video.js engages VHS for proxied transcode streams.
+            return { src: streamUrl, type: 'video/mp2t' };
+        }
 
         // Only force MIME when confidently known. For unknown live URLs,
         // leaving type undefined allows Video.js/native tech to inspect response headers.
@@ -308,18 +322,23 @@ export class WebPlayerViewComponent {
             return streamUrl;
         }
 
-        // Only proxy live/HLS-like URLs. Keep VOD/series direct to avoid
-        // unnecessary proxy interference with providers that already serve them correctly.
+        // Proxy live/HLS and Xtream VOD/series URLs. VOD often redirects through
+        // provider endpoints that fail in embedded browsers without proxy mediation.
         const sourceHint = streamUrl.toLowerCase();
         const extension = getExtensionFromUrl(streamUrl)?.toLowerCase();
+        const isMovieOrSeries =
+            sourceHint.includes('/movie/') || sourceHint.includes('/series/');
         const shouldProxy =
             sourceHint.includes('/live/') ||
             extension === 'm3u8' ||
             extension === 'm3u' ||
-            extension === 'ts';
+            extension === 'ts' ||
+            isMovieOrSeries;
         if (!shouldProxy) {
             return streamUrl;
         }
+
+        const forceTranscode = false;
 
         const electronApi = (globalThis as {
             electron?: { getStreamProxyPort?: () => Promise<number> };
@@ -331,7 +350,7 @@ export class WebPlayerViewComponent {
             if (!proxyBase) {
                 return streamUrl;
             }
-            return this.buildProxyStreamUrl(proxyBase, streamUrl);
+            return this.buildProxyStreamUrl(proxyBase, streamUrl, forceTranscode);
         }
 
         try {
@@ -339,14 +358,25 @@ export class WebPlayerViewComponent {
             if (!port) {
                 return streamUrl;
             }
-            return this.buildProxyStreamUrl(`http://127.0.0.1:${port}`, streamUrl);
+            return this.buildProxyStreamUrl(
+                `http://127.0.0.1:${port}`,
+                streamUrl,
+                forceTranscode
+            );
         } catch {
             return streamUrl;
         }
     }
 
-    private buildProxyStreamUrl(proxyBase: string, streamUrl: string): string {
+    private buildProxyStreamUrl(
+        proxyBase: string,
+        streamUrl: string,
+        forceTranscode = false
+    ): string {
         const params = new URLSearchParams({ url: streamUrl });
+        if (forceTranscode) {
+            params.set('transcode', '1');
+        }
         const headers = this.streamHeaders();
 
         if (headers?.userAgent) {
