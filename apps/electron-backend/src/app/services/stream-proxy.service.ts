@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { spawn } from 'child_process';
 import { IncomingMessage, ServerResponse } from 'http';
 import { URL } from 'url';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 
 const M3U8_CONTENT_TYPES = [
@@ -13,8 +14,23 @@ const M3U8_CONTENT_TYPES = [
 ];
 
 const STREAM_PROXY_VERSION = '2026-04-28-r3';
-const FFMPEG_BIN = typeof ffmpegPath === 'string' ? ffmpegPath : null;
-const HAS_WORKING_FFMPEG = !!FFMPEG_BIN && fs.existsSync(FFMPEG_BIN);
+const FFMPEG_STATIC_BIN = typeof ffmpegPath === 'string' ? ffmpegPath : null;
+const FFMPEG_INSTALLER_BIN =
+    typeof ffmpegInstaller?.path === 'string' ? ffmpegInstaller.path : null;
+const FFMPEG_BIN =
+    (FFMPEG_STATIC_BIN && fs.existsSync(FFMPEG_STATIC_BIN)
+        ? FFMPEG_STATIC_BIN
+        : null) ??
+    (FFMPEG_INSTALLER_BIN && fs.existsSync(FFMPEG_INSTALLER_BIN)
+        ? FFMPEG_INSTALLER_BIN
+        : null);
+const FFMPEG_SOURCE =
+    FFMPEG_BIN === FFMPEG_STATIC_BIN
+        ? 'ffmpeg-static'
+        : FFMPEG_BIN === FFMPEG_INSTALLER_BIN
+          ? '@ffmpeg-installer/ffmpeg'
+          : 'none';
+const HAS_WORKING_FFMPEG = !!FFMPEG_BIN;
 let ffmpegUnavailableLogged = false;
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
@@ -82,7 +98,7 @@ function maybeTranscodeResponse(
         if (!ffmpegUnavailableLogged) {
             ffmpegUnavailableLogged = true;
             console.warn(
-                `[StreamProxy] ffmpeg binary unavailable (${FFMPEG_BIN ?? 'no ffmpeg path'}); serving source without transcoding`
+                `[StreamProxy] ffmpeg binary unavailable (ffmpeg-static=${FFMPEG_STATIC_BIN ?? 'none'}, installer=${FFMPEG_INSTALLER_BIN ?? 'none'}); serving source without transcoding`
             );
         }
         return false;
@@ -93,7 +109,9 @@ function maybeTranscodeResponse(
         return false;
     }
 
-    console.log(`[StreamProxy] transcoding to H.264/AAC: ${sourceUrl}`);
+    console.log(
+        `[StreamProxy] transcoding to H.264/AAC via ${FFMPEG_SOURCE}: ${sourceUrl}`
+    );
 
     const responseHeaders: http.OutgoingHttpHeaders = {
         'access-control-allow-origin': '*',
