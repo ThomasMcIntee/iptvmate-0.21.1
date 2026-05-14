@@ -142,8 +142,16 @@ function maybeTranscodeResponse(
             'libx264',
             '-preset',
             'veryfast',
+            '-tune',
+            'zerolatency',
             '-pix_fmt',
             'yuv420p',
+            '-g',
+            '48',
+            '-keyint_min',
+            '48',
+            '-sc_threshold',
+            '0',
             '-c:a',
             'aac',
             '-b:a',
@@ -169,13 +177,20 @@ function maybeTranscodeResponse(
     });
 
     const terminateFfmpeg = () => {
-        if (!ffmpeg.killed) {
-            ffmpeg.kill('SIGKILL');
+        if (ffmpeg.killed) {
+            return;
         }
+
+        // Give ffmpeg a chance to flush trailer data before forcing termination.
+        ffmpeg.kill('SIGTERM');
+        setTimeout(() => {
+            if (!ffmpeg.killed) {
+                ffmpeg.kill('SIGKILL');
+            }
+        }, 1000);
     };
 
-    req.on('close', terminateFfmpeg);
-    res.on('close', terminateFfmpeg);
+    req.on('aborted', terminateFfmpeg);
     proxyRes.on('error', terminateFfmpeg);
 
     ffmpeg.on('error', (error) => {
@@ -186,10 +201,17 @@ function maybeTranscodeResponse(
         }
     });
 
-    ffmpeg.on('close', (code) => {
+    ffmpeg.on('close', (code, signal) => {
+        if (signal && (req.aborted || res.writableEnded || res.destroyed)) {
+            console.log(
+                `[StreamProxy] ffmpeg terminated by ${signal} after client disconnect`
+            );
+            return;
+        }
+
         if (code !== 0) {
             console.error(
-                `[StreamProxy] ffmpeg exited with code ${code}. ${ffmpegErrorOutput}`
+                `[StreamProxy] ffmpeg exited with code ${code}${signal ? ` (signal ${signal})` : ''}. ${ffmpegErrorOutput}`
             );
             if (!res.writableEnded) {
                 res.end();
