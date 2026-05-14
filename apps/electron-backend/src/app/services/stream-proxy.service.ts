@@ -246,6 +246,7 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
     const params = new URLSearchParams(reqUrl.slice(searchStart + 1));
     const targetUrl = params.get('url');
     const shouldTranscode = params.get('transcode') === '1';
+    const shouldTranscodeRequest = shouldTranscode && req.method === 'GET';
 
     if (!targetUrl) {
         res.writeHead(400);
@@ -267,6 +268,11 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
     // Forward relevant request headers, but drop host/origin to avoid rejection
     const forwardHeaders: Record<string, string | string[]> = {};
     const skipHeaders = new Set(['host', 'origin', 'referer']);
+    if (shouldTranscodeRequest) {
+        // Full-file upstream input keeps ffmpeg output stable for progressive playback.
+        skipHeaders.add('range');
+        skipHeaders.add('if-range');
+    }
     for (const [k, v] of Object.entries(req.headers)) {
         if (!skipHeaders.has(k.toLowerCase()) && v !== undefined) {
             forwardHeaders[k] = v;
@@ -328,7 +334,7 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
                 );
             }
 
-            if (shouldTranscode && req.method === 'GET') {
+            if (shouldTranscodeRequest) {
                 const didStartTranscoding = maybeTranscodeResponse(
                     req,
                     res,
