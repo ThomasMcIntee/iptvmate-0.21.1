@@ -29,6 +29,16 @@
     >
         <mat-icon>info</mat-icon>
     </button>
+    <button
+        mat-stroked-button
+        class="filter-btn"
+        (click)="filterClicked.emit()"
+        [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
+        data-test-id="toolbar-filter"
+    >
+        <mat-icon>filter_list</mat-icon>
+        <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
+    </button>
     {{ activeChannel?.name }}
     <div class="spacer"></div>
     <button

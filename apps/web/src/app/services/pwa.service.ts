@@ -35,6 +35,8 @@ export class PwaService extends DataService {
         XtreamCodeActions.GetVodCategories,
         XtreamCodeActions.GetSeriesCategories,
     ]);
+    private readonly silentLogThrottleMs = 30_000;
+    private readonly lastSilentErrorByKey = new Map<string, number>();
 
     /** Proxy URL to avoid CORS issues */
     corsProxyUrl = AppConfig.BACKEND_URL;
@@ -49,7 +51,23 @@ export class PwaService extends DataService {
 
     constructor() {
         super();
-        console.log('PWA service initialized...');
+    }
+
+    private logSilentXtreamFailure(action: string | undefined, message: string): void {
+        const actionName = action ?? 'unknown';
+        const dedupeKey = `${actionName}:${message}`;
+        const now = Date.now();
+        const lastLoggedAt = this.lastSilentErrorByKey.get(dedupeKey) ?? 0;
+
+        if (now - lastLoggedAt < this.silentLogThrottleMs) {
+            return;
+        }
+
+        this.lastSilentErrorByKey.set(dedupeKey, now);
+        console.warn(
+            `Background Xtream action failed (${actionName}):`,
+            message
+        );
     }
 
     private isNetworkError(error: unknown): boolean {
@@ -240,10 +258,7 @@ export class PwaService extends DataService {
                 );
 
                 if (isSilentAction) {
-                    console.log(
-                        `Background Xtream action failed (${action ?? 'unknown'}):`,
-                        normalizedMessage
-                    );
+                    this.logSilentXtreamFailure(action, normalizedMessage);
                     return {
                         type: ERROR,
                         status: (response as any).status ?? 500,
@@ -270,18 +285,17 @@ export class PwaService extends DataService {
             const action = payload.params.action;
             const isSilentAction = this.silentXtreamActions.has(action);
             const normalizedMessage = this.getReadableXtreamErrorMessage(error);
+            const result = {
+                type: ERROR,
+                status: error.status ?? 500,
+                message: normalizedMessage,
+            };
 
             // Log error to console
             if (isSilentAction) {
-                console.log(
-                    `Background Xtream action failed (${action ?? 'unknown'}):`,
-                    normalizedMessage
-                );
-                return {
-                    type: ERROR,
-                    status: error.status ?? 500,
-                    message: normalizedMessage,
-                };
+                this.logSilentXtreamFailure(action, normalizedMessage);
+                window.postMessage(result);
+                return result;
             }
 
             console.error('Xtream request error:', normalizedMessage);
@@ -292,11 +306,8 @@ export class PwaService extends DataService {
                     duration: 5000,
                 }
             );
-            return {
-                type: ERROR,
-                status: error.status ?? 500,
-                message: normalizedMessage,
-            };
+            window.postMessage(result);
+            return result;
         }
     }
 

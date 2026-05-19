@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { FilterPipe } from '@iptvmate/pipes';
@@ -11,10 +11,7 @@ import { PortalStore } from '../portal.store';
     selector: 'app-category-view',
     template: `
         @if (items().length > 0) {
-            @for (
-                item of items() | filterBy: searchPhrase() : 'category_name';
-                track $index
-            ) {
+            @for (item of visibleItems(); track $index) {
                 <mat-card
                     appearance="outlined"
                     class="category-item"
@@ -23,15 +20,13 @@ import { PortalStore } from '../portal.store';
                     <mat-card-content>
                         {{
                             item.category_name ||
-                                item.name ||
+                                $any(item).name ||
                                 'No category name'
                         }}
                     </mat-card-content>
                 </mat-card>
             }
-            @if (
-                !(items() | filterBy: searchPhrase() : 'category_name')?.length
-            ) {
+            @if (!visibleItems().length) {
                 <app-playlist-error-view
                     title="No results"
                     [description]="
@@ -54,7 +49,6 @@ import { PortalStore } from '../portal.store';
     `,
     styleUrl: './category-view.component.scss',
     imports: [
-        FilterPipe,
         MatCardModule,
         MatIconModule,
         PlaylistErrorViewComponent,
@@ -68,4 +62,27 @@ export class CategoryViewComponent {
 
     private readonly portalStore = inject(PortalStore);
     readonly searchPhrase = this.portalStore.searchPhrase;
+    readonly sortType = this.portalStore.sortType;
+    readonly visibleItems = computed(() => {
+        const phrase = this.searchPhrase();
+        const normalizedPhrase = (phrase ?? '').toLowerCase();
+
+        const filtered = this.items().filter((item: any) => {
+            const name = item.category_name || item.name || 'No category name';
+            return name.toLowerCase().includes(normalizedPhrase);
+        });
+
+        if (this.sortType() === 'alpha') {
+            return [...filtered].sort((a: any, b: any) => {
+                const nameA = a.category_name || a.name || '';
+                const nameB = b.category_name || b.name || '';
+                return String(nameA).localeCompare(String(nameB), undefined, {
+                    sensitivity: 'base',
+                    numeric: true,
+                });
+            });
+        }
+
+        return filtered;
+    });
 }

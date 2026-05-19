@@ -12,6 +12,8 @@ interface RemoteControlCommand {
     number?: number;
 }
 
+type JsonObject = Record<string, unknown>;
+
 interface RemoteControlStatus {
     portal: 'm3u' | 'xtream' | 'stalker' | 'unknown';
     isLiveView: boolean;
@@ -269,7 +271,7 @@ class RemoteControlEvents {
     private readJsonBody(
         req: http.IncomingMessage,
         res: http.ServerResponse,
-        callback: (body: any) => void
+        callback: (body: JsonObject) => void
     ): void {
         let data = '';
         let totalSize = 0;
@@ -299,7 +301,14 @@ class RemoteControlEvents {
             }
 
             try {
-                callback(JSON.parse(data));
+                const parsed = JSON.parse(data);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    callback(parsed as JsonObject);
+                    return;
+                }
+
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
             } catch {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Invalid JSON payload' }));

@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FilterPipe, SortPipe } from '@iptvmate/pipes';
 import { TranslateModule } from '@ngx-translate/core';
@@ -16,10 +19,13 @@ import { PortalStore } from '../portal.store';
         FilterPipe,
         SortPipe,
         MatCardModule,
+        MatFormFieldModule,
         MatIconModule,
+        MatInputModule,
         MatTooltipModule,
         PlaylistErrorViewComponent,
         TranslateModule,
+        FormsModule,
     ],
 })
 export class CategoryContentViewComponent {
@@ -29,4 +35,8 @@ export class CategoryContentViewComponent {
     portalStore = inject(PortalStore);
     searchPhrase = this.portalStore.searchPhrase;
     sortType = this.portalStore.sortType;
+
+    onSearchChange(value: string): void {
+        this.portalStore.setSearchPhrase(value);
+    }
 }

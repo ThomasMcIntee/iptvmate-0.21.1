@@ -9,7 +9,15 @@ import {
     createPlaylistObject,
 } from 'm3u-utils';
 import { NgxIndexedDBService } from 'ngx-indexed-db';
-import { combineLatest, firstValueFrom, from, map, switchMap } from 'rxjs';
+import {
+    catchError,
+    combineLatest,
+    firstValueFrom,
+    from,
+    map,
+    of,
+    switchMap,
+} from 'rxjs';
 import {
     Channel,
     DbStores,
@@ -61,7 +69,14 @@ export class PlaylistsService {
                     data.map(({ playlist, items, header, ...rest }) => ({
                         ...rest,
                     }))
-                )
+                ),
+                catchError((error) => {
+                    console.warn(
+                        '[PlaylistsService] IndexedDB playlist metadata load failed',
+                        error
+                    );
+                    return of([] as PlaylistMeta[]);
+                })
             );
 
         if (!this.electronApi?.dbGetAllPlaylists) {
@@ -89,7 +104,14 @@ export class PlaylistsService {
                         filePath: playlist.filePath || undefined,
                     })
                 )
-            )
+            ),
+            catchError((error) => {
+                console.warn(
+                    '[PlaylistsService] Electron DB playlist metadata load failed',
+                    error
+                );
+                return of([] as PlaylistMeta[]);
+            })
         );
 
         return combineLatest([indexedDbPlaylists$, sqlitePlaylists$]).pipe(

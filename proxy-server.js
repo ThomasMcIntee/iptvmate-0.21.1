@@ -9,6 +9,15 @@
 
 const http = require('http');
 const https = require('https');
+const tls = require('tls');
+
+// Permissive TLS options for IPTV providers with legacy SSL/TLS configurations.
+// Many IPTV CDNs use older cipher suites or TLS versions that Node.js rejects by default.
+const PERMISSIVE_TLS_OPTIONS = {
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1',
+    ciphers: 'DEFAULT:@SECLEVEL=0',
+};
 const { parse: parseM3u } = require('./node_modules/iptv-playlist-parser/src/index.js');
 const { randomUUID } = require('node:crypto');
 const uuidv4 = () => randomUUID();
@@ -95,7 +104,7 @@ async function handleXtream(query, res) {
             },
             timeout: 30000,
             validateStatus: (s) => s < 500,
-            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+            httpsAgent: new https.Agent(PERMISSIVE_TLS_OPTIONS),
         });
 
         if (response.status >= 400) {
@@ -117,7 +126,7 @@ async function handleParse(query, res) {
     if (!url) return sendJson(res, 400, { error: 'Missing url param' });
 
     try {
-        const agent = new https.Agent({ rejectUnauthorized: false });
+        const agent = new https.Agent(PERMISSIVE_TLS_OPTIONS);
         const result = await axios.get(url, {
             httpsAgent: agent,
             timeout: 30000,
@@ -184,7 +193,7 @@ async function handleStalker(query, res) {
             headers,
             timeout: isCreateLink ? 30000 : 15000,
             validateStatus: (s) => s < 500,
-            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+            httpsAgent: new https.Agent(PERMISSIVE_TLS_OPTIONS),
         });
 
         if (response.status >= 400) {
@@ -357,7 +366,7 @@ function handleStream(req, res) {
             path: currentTarget.pathname + currentTarget.search,
             method: req.method || 'GET',
             headers: { ...forwardHeaders, host: currentTarget.host },
-            rejectUnauthorized: false,
+            ...(isHttps ? PERMISSIVE_TLS_OPTIONS : {}),
         };
 
         const proxyReq = transport.request(options, (proxyRes) => {
@@ -419,6 +428,7 @@ function handleStream(req, res) {
         });
 
         proxyReq.on('error', (err) => {
+            console.error(`[stream] proxy error for ${currentTarget.host}${currentTarget.pathname}: ${err.code} - ${err.message}`);
             if (!res.headersSent) res.writeHead(502);
             res.end(err.message);
         });

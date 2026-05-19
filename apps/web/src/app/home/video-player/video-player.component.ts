@@ -41,6 +41,7 @@ import {
     combineLatestWith,
     filter,
     map,
+    of,
     startWith,
     switchMap,
     take,
@@ -237,6 +238,10 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
                         Channel[]
                     >;
                 }
+
+                // Ensure switchMap always returns an observable
+                // (e.g. /iptv route without params/query).
+                return of([] as Channel[]);
             })
         );
 
@@ -572,8 +577,17 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
     getVjsOptions(channel: Channel): {
         sources: Array<{ src: string; type?: string }>;
     } {
-        const sourceUrl = channel.url + (channel.epgParams || '');
-        const extension = getExtensionFromUrl(channel.url)?.toLowerCase();
+        if (channel.http?.['user-agent']) {
+            window.electron?.setUserAgent(
+                channel.http['user-agent'],
+                channel.http.referrer
+            );
+        }
+
+        const sourceUrl = this.buildChannelSourceUrl(channel);
+        const extension = getExtensionFromUrl(
+            this.getEffectiveSourceUrl(channel.url)
+        )?.toLowerCase();
 
         if (extension === 'm3u8' || extension === 'm3u') {
             return {
@@ -596,5 +610,37 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
         return {
             sources: [{ src: sourceUrl }],
         };
+    }
+
+    private getEffectiveSourceUrl(url: string): string {
+        try {
+            const parsed = new URL(url);
+            const nestedUrl = parsed.searchParams.get('url');
+            return nestedUrl ? decodeURIComponent(nestedUrl) : url;
+        } catch {
+            return url;
+        }
+    }
+
+    private buildChannelSourceUrl(channel: Channel): string {
+        const extension = getExtensionFromUrl(
+            this.getEffectiveSourceUrl(channel.url)
+        )?.toLowerCase();
+        const isVodLikeExtension = [
+            'mp4',
+            'mkv',
+            'avi',
+            'mov',
+            'webm',
+            'm4v',
+            'mpeg',
+            'mpg',
+            'wmv',
+            'flv',
+        ].includes(extension ?? '');
+
+        // EPG query params are intended for live streams and can break VOD playback.
+        const epgParams = isVodLikeExtension ? '' : (channel.epgParams ?? '');
+        return channel.url + epgParams;
     }
 }

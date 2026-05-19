@@ -344,6 +344,25 @@
     app-region: no-drag; // Allow button interactions
 }
 
+.quick-filter {
+    display: flex;
+    align-items: center;
+    app-region: no-drag;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.quick-filter-btn {
+    border-color: rgba(139, 92, 246, 0.45) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(139, 92, 246, 0.16) !important;
+    height: 38px;
+
+    .mat-icon {
+        margin-right: 6px;
+    }
+}
+
 .add-playlist-btn {
     background-color: rgba(139, 92, 246, 0.12) !important;
     color: rgba(139, 92, 246, 1) !important;
@@ -506,6 +525,14 @@
             margin-right: 10px;
         }
     }
+
+    .quick-filter {
+        margin-right: 4px;
+    }
+
+    .quick-filter-btn span {
+        display: none;
+    }
 }
 
 @media (max-width: 599px) {
@@ -553,4 +580,37 @@
     .menu {
         gap: 0;
     }
+
+    .quick-filter {
+        margin-right: 0;
+    }
+
+    .quick-filter-btn {
+        min-width: 36px;
+        padding: 0 8px;
+    }
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    flex: 1 1 0%;
+    min-width: 0;
+}
+
+.quick-filter {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.quick-filter-btn {
+    white-space: nowrap;
 }

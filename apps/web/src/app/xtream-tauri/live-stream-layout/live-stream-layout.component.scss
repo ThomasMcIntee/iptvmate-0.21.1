@@ -75,6 +75,15 @@
     margin: 0;
 }
 
+.filter-button {
+    margin-right: 8px;
+    height: 34px;
+
+    .mat-icon {
+        margin-right: 4px;
+    }
+}
+
 .no-channel-selected {
     padding: 16px;
     margin: 0;
@@ -92,5 +101,11 @@
         > .artplayer-container {
         height: 100% !important;
         width: 100% !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .filter-button span {
+        display: none;
     }
 }

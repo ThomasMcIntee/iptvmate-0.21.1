@@ -6,10 +6,12 @@
     (contentTypeChanged)="changeContentType($event)"
     (searchTextChanged)="setSearchPhrase($event)"
     (favoritesClicked)="favoritesClicked()"
-    [searchVisible]="
-        currentLayout === 'category' || currentLayout === 'category_content'
+    [searchVisible]="true"
+    [sortVisible]="
+        currentLayout === 'category' ||
+        currentLayout === 'category_content' ||
+        currentLayout === 'live-stream-favorites'
     "
-    [sortVisible]="currentLayout === 'category_content'"
     [favoriteVisible]="
         currentLayout === 'category_content' ||
         currentLayout === 'live-stream-favorites'
@@ -41,6 +43,7 @@
             @if (selectedContentType === 'itv') {
                 <app-live-stream-layout
                     [channels]="items"
+                    [searchPhrase]="globalSearchPhrase()"
                     [player]="player"
                     [streamUrl]="streamUrl"
                     [streamHeaders]="streamHeaders"
@@ -80,6 +83,7 @@
         @case ('live-stream-favorites') {
             <app-live-stream-layout
                 [channels]="favoritesLiveStream$ | async"
+                [searchPhrase]="globalSearchPhrase()"
                 [player]="player"
                 [streamUrl]="streamUrl"
                 [streamHeaders]="streamHeaders"

@@ -42,6 +42,7 @@ import { WebPlayerViewComponent } from '../web-player-view/web-player-view.compo
 })
 export class LiveStreamLayoutComponent {
     @Input({ required: true }) channels!: XtreamItem[];
+    @Input() searchPhrase = '';
     @Input({ required: true }) player: VideoPlayer = VideoPlayer.VideoJs;
     @Input() epgItems!: EpgItem[];
     @Input() streamUrl!: string;
@@ -54,6 +55,14 @@ export class LiveStreamLayoutComponent {
     @Output() itemClicked = new EventEmitter<XtreamItem>();
 
     searchString = signal<string>('');
+
+    get effectiveSearchPhrase(): string {
+        const local = this.searchString().trim();
+        if (local) {
+            return local;
+        }
+        return (this.searchPhrase ?? '').trim();
+    }
 
     trackBy(_index: number, item: XtreamItem) {
         return item.stream_id;

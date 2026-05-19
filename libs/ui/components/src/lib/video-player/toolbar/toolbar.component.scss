@@ -19,8 +19,21 @@ mat-toolbar {
     }
 }
 
+.filter-btn {
+    margin-left: 8px;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+
+    .mat-icon {
+        margin-right: 6px;
+    }
+}
+
 @media only screen and (max-width: 599px) {
     .sidenav-toggle-button {
+        display: none;
+    }
+
+    .filter-btn span {
         display: none;
     }
 }

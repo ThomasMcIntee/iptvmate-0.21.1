@@ -13,7 +13,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatIconButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
@@ -53,6 +53,7 @@ const LIVE_CHANNEL_SORT_STORAGE_KEY = 'xtream-live-channel-sort-mode';
         CategoryViewComponent,
         EpgViewComponent,
         FormsModule,
+        MatButton,
         MatFormFieldModule,
         MatIcon,
         MatIconButton,
@@ -77,10 +78,25 @@ export class LiveStreamLayoutComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
 
     readonly categories = this.xtreamStore.getCategoriesBySelectedType;
+    readonly categorySearchTerm = signal('');
+    readonly showCategorySearch = signal(false);
+    readonly filteredCategories = computed(() => {
+        const categories = this.categories() ?? [];
+        const term = this.categorySearchTerm().trim().toLowerCase();
+        if (!term) {
+            return categories;
+        }
+
+        return categories.filter((category: any) => {
+            const name = category?.category_name ?? category?.name ?? '';
+            return String(name).toLowerCase().includes(term);
+        });
+    });
     readonly categoryItemCounts = this.xtreamStore.getCategoryItemCounts;
     readonly currentPlaylist = this.xtreamStore.currentPlaylist;
     readonly epgItems = this.xtreamStore.epgItems;
     readonly selectedCategoryId = this.xtreamStore.selectedCategoryId;
+    readonly showChannelSearch = signal(false);
     readonly liveChannelSortMode = signal<LiveChannelSortMode>('server');
     readonly liveChannelSortLabel = computed(() => {
         const mode = this.liveChannelSortMode();
@@ -269,6 +285,22 @@ export class LiveStreamLayoutComponent implements OnInit, OnDestroy {
     setLiveChannelSortMode(mode: LiveChannelSortMode): void {
         this.liveChannelSortMode.set(mode);
         localStorage.setItem(LIVE_CHANNEL_SORT_STORAGE_KEY, mode);
+    }
+
+    toggleChannelSearch(): void {
+        if (this.selectedCategoryId()) {
+            this.showChannelSearch.update((v) => !v);
+            return;
+        }
+
+        this.showCategorySearch.update((v) => !v);
+        if (!this.showCategorySearch()) {
+            this.categorySearchTerm.set('');
+        }
+    }
+
+    onCategorySearchChange(term: string): void {
+        this.categorySearchTerm.set(term);
     }
 
     ngOnDestroy(): void {

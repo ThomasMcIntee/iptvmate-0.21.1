@@ -33,6 +33,7 @@ import { Channel } from 'shared-interfaces';
 export class ToolbarComponent {
     @Input() activeChannel!: Channel;
     @Input() isLeftDrawerOpened = true;
+    readonly filterClicked = output<void>();
     readonly infoOverlayClicked = output<void>();
     readonly multiEpgClicked = output<void>();
     readonly settingsClicked = output<void>();

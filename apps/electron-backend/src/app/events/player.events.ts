@@ -18,6 +18,8 @@ import { existsSync } from 'fs';
 import { AddressInfo, createConnection, createServer } from 'net';
 import path from 'path';
 
+type PlayerContentInfo = Record<string, unknown>;
+
 export default class PlayerEvents {
     static bootstrapPlayerEvents(): Electron.IpcMain {
         return ipcMain;
@@ -107,7 +109,7 @@ async function getMpvProperty(
                             return;
                         }
                     }
-                } catch (e) {
+                } catch {
                     // ignore parse errors
                 }
             }
@@ -120,13 +122,13 @@ async function getMpvProperty(
                 try {
                     const response = JSON.parse(data);
                     resolve(response.data ?? null);
-                } catch (e) {
+                } catch {
                     resolve(null);
                 }
             }
         });
 
-        client.on('error', (err) => {
+        client.on('error', () => {
             clearTimeout(timeoutHandle);
             resolve(null);
         });
@@ -154,7 +156,7 @@ function shouldIgnoreMpvStdoutLine(line: string): boolean {
     return /^(\(Paused\)\s*)?AV:\s/.test(line);
 }
 
-function startPositionPolling(socketPath: string, contentInfo: any) {
+function startPositionPolling(socketPath: string, contentInfo?: PlayerContentInfo) {
     stopPositionPolling();
 
     // Initial delay to let video load
@@ -182,11 +184,11 @@ function startPositionPolling(socketPath: string, contentInfo: any) {
                             durationSeconds: duration
                                 ? Math.floor(duration)
                                 : null,
-                            ...contentInfo,
+                            ...(contentInfo ?? {}),
                         }
                     );
                 }
-            } catch (err) {
+            } catch {
                 // console.error('[PlayerEvents] Error during polling:', err);
                 // MPV may have closed, stop polling
                 stopPositionPolling();
@@ -239,7 +241,7 @@ async function getVlcProperty(port: number, command: string): Promise<string> {
     });
 }
 
-function startVlcPositionPolling(port: number, contentInfo: any) {
+function startVlcPositionPolling(port: number, contentInfo?: PlayerContentInfo) {
     stopVlcPositionPolling();
 
     // VLC needs time to start and bind port
@@ -264,11 +266,11 @@ function startVlcPositionPolling(port: number, contentInfo: any) {
                         {
                             positionSeconds: position,
                             durationSeconds: !isNaN(duration) ? duration : null,
-                            ...contentInfo,
+                            ...(contentInfo ?? {}),
                         }
                     );
                 }
-            } catch (err) {
+            } catch {
                 // console.error('[PlayerEvents] VLC polling error:', err);
                 stopVlcPositionPolling();
             }
@@ -311,7 +313,7 @@ ipcMain.handle(
         userAgent?: string,
         referer?: string,
         origin?: string,
-        contentInfo?: any,
+        contentInfo?: PlayerContentInfo,
         startTime?: number
     ) => {
         try {
@@ -436,7 +438,7 @@ ipcMain.handle(
                         const lines = data
                             .toString()
                             .split('\n')
-                            .map((line) => line.trim())
+                            .map((line: string) => line.trim())
                             .filter(Boolean);
 
                         for (const output of lines) {
@@ -586,7 +588,7 @@ ipcMain.handle(
         userAgent?: string,
         referer?: string,
         origin?: string,
-        contentInfo?: any,
+        contentInfo?: PlayerContentInfo,
         startTime?: number
     ) => {
         try {

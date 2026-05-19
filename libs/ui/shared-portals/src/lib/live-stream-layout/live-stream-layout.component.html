@@ -14,18 +14,6 @@
         storageKey="sidebar-width"
     >
         <div class="sidebar-content">
-            <div class="search-panel">
-                <mat-form-field class="search-bar">
-                    <mat-label>{{ 'CHANNELS.SEARCH_CHANNEL' | translate }}</mat-label>
-                    <mat-icon matPrefix>search</mat-icon>
-                    <input
-                        matInput
-                        type="search"
-                        [placeholder]="'CHANNELS.SEARCH_CHANNEL' | translate"
-                        [(ngModel)]="searchString"
-                    />
-                </mat-form-field>
-            </div>
             <mat-selection-list [multiple]="false">
                 <cdk-virtual-scroll-viewport
                     [itemSize]="56"
@@ -34,7 +22,7 @@
                     <mat-list-option
                         *cdkVirtualFor="
                             let item of channels
-                                | filterBy: searchString() : 'name';
+                                | filterBy: effectiveSearchPhrase : 'name';
                             trackBy: trackBy;
                             templateCacheSize: 0
                         "

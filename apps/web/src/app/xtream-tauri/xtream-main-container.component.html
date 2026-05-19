@@ -41,68 +41,81 @@
                     {{ getContentLabel() }}
                 </h2>
             </div>
-            @if (canShowSortMenu()) {
+            @if (canShowFilterButton()) {
                 <div class="header-actions">
-                    <mat-form-field
-                        class="category-search"
-                        appearance="outline"
-                        subscriptSizing="dynamic"
-                    >
-                        <mat-icon matPrefix>search</mat-icon>
-                        <input
-                            matInput
-                            type="search"
-                            spellcheck="false"
-                            [ngModel]="categorySearchTerm()"
-                            (ngModelChange)="onCategorySearchChange($event)"
-                            placeholder="Search in category"
-                        />
-                        @if (categorySearchTerm()) {
-                            <button
-                                mat-icon-button
-                                matSuffix
-                                aria-label="Clear search"
-                                (click)="clearCategorySearch()"
-                            >
-                                <mat-icon>close</mat-icon>
-                            </button>
-                        }
-                    </mat-form-field>
                     <button
-                        mat-icon-button
-                        [matMenuTriggerFor]="xtreamSortMenu"
-                        [matTooltip]="'Sort: ' + contentSortLabel()"
-                        aria-label="Sort content"
+                        mat-stroked-button
+                        class="filter-button"
+                        (click)="toggleCategorySearch()"
+                        [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
                     >
-                        <mat-icon>sort</mat-icon>
+                        <mat-icon>filter_list</mat-icon>
+                        <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
                     </button>
+                    @if (isCategorySearchOpen()) {
+                        <mat-form-field
+                            class="category-search"
+                            appearance="outline"
+                            subscriptSizing="dynamic"
+                        >
+                            <mat-icon matPrefix>search</mat-icon>
+                            <input
+                                matInput
+                                type="search"
+                                spellcheck="false"
+                                [ngModel]="categorySearchTerm()"
+                                (ngModelChange)="onCategorySearchChange($event)"
+                                placeholder="Search in category"
+                            />
+                            @if (categorySearchTerm()) {
+                                <button
+                                    mat-icon-button
+                                    matSuffix
+                                    aria-label="Clear search"
+                                    (click)="clearCategorySearch()"
+                                >
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            }
+                        </mat-form-field>
+                    }
+                    @if (canShowSortMenu()) {
+                        <mat-menu #xtreamSortMenu="matMenu">
+                            <button mat-menu-item (click)="setContentSortMode('date-desc')">
+                                <span>Date Added (Latest First)</span>
+                                @if (contentSortMode() === 'date-desc') {
+                                    <mat-icon>check</mat-icon>
+                                }
+                            </button>
+                            <button mat-menu-item (click)="setContentSortMode('date-asc')">
+                                <span>Date Added (Oldest First)</span>
+                                @if (contentSortMode() === 'date-asc') {
+                                    <mat-icon>check</mat-icon>
+                                }
+                            </button>
+                            <button mat-menu-item (click)="setContentSortMode('name-asc')">
+                                <span>Name A-Z</span>
+                                @if (contentSortMode() === 'name-asc') {
+                                    <mat-icon>check</mat-icon>
+                                }
+                            </button>
+                            <button mat-menu-item (click)="setContentSortMode('name-desc')">
+                                <span>Name Z-A</span>
+                                @if (contentSortMode() === 'name-desc') {
+                                    <mat-icon>check</mat-icon>
+                                }
+                            </button>
+                        </mat-menu>
+                        <button
+                            mat-icon-button
+                            [matMenuTriggerFor]="xtreamSortMenu"
+                            [matTooltip]="'Sort: ' + contentSortLabel()"
+                            aria-label="Sort content"
+                        >
+                            <mat-icon>sort</mat-icon>
+                        </button>
+                    }
                 </div>
-                <mat-menu #xtreamSortMenu="matMenu">
-                    <button mat-menu-item (click)="setContentSortMode('date-desc')">
-                        <span>Date Added (Latest First)</span>
-                        @if (contentSortMode() === 'date-desc') {
-                            <mat-icon>check</mat-icon>
-                        }
-                    </button>
-                    <button mat-menu-item (click)="setContentSortMode('date-asc')">
-                        <span>Date Added (Oldest First)</span>
-                        @if (contentSortMode() === 'date-asc') {
-                            <mat-icon>check</mat-icon>
-                        }
-                    </button>
-                    <button mat-menu-item (click)="setContentSortMode('name-asc')">
-                        <span>Name A-Z</span>
-                        @if (contentSortMode() === 'name-asc') {
-                            <mat-icon>check</mat-icon>
-                        }
-                    </button>
-                    <button mat-menu-item (click)="setContentSortMode('name-desc')">
-                        <span>Name Z-A</span>
-                        @if (contentSortMode() === 'name-desc') {
-                            <mat-icon>check</mat-icon>
-                        }
-                    </button>
-                </mat-menu>
             }
         </div>
     }

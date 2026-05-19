@@ -8,32 +8,55 @@
         </div>
     </div>
 
-    @if (isHome) {
-        <div class="search-container">
-            <mat-icon class="search-icon">search</mat-icon>
-            <input
-                #searchInput
-                type="search"
-                class="search-input"
-                spellcheck="false"
-                autocomplete="off"
-                [placeholder]="'HOME.PLAYLISTS.SEARCH_PLAYLISTS' | translate"
-                (input)="onSearchQueryUpdate(searchInput.value)"
-            />
+    @if (showFilterRow) {
+        <div class="header-row">
+            <div class="search-container">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input
+                    #searchInput
+                    type="search"
+                    class="search-input"
+                    spellcheck="false"
+                    autocomplete="off"
+                    [placeholder]="'HOME.PLAYLISTS.SEARCH_PLAYLISTS' | translate"
+                    (input)="onSearchQueryUpdate(searchInput.value)"
+                />
+            </div>
+            <!-- Quick filter button for content screens -->
+            <div class="quick-filter">
+                <button
+                    mat-stroked-button
+                    class="quick-filter-btn"
+                    #quickFilterTrigger="matMenuTrigger"
+                    [matMenuTriggerFor]="quickFilterMenu.menu()"
+                    [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
+                    [matBadge]="quickFilterMenu.activeFiltersCount"
+                    [matBadgeHidden]="quickFilterMenu.activeFiltersCount === 0"
+                    matBadgeSize="small"
+                    matBadgeColor="accent"
+                    data-test-id="quick-filter-sort-playlists"
+                >
+                    <mat-icon aria-hidden="false">filter_list</mat-icon>
+                    <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
+                </button>
+                <app-filter-sort-menu #quickFilterMenu [menuTrigger]="quickFilterTrigger" />
+            </div>
         </div>
+    }
 
         <!-- Desktop menu buttons -->
         <div class="menu desktop-menu">
             <button
                 mat-icon-button
                 class="add-playlist-btn"
-                [matMenuTriggerFor]="addPlaylistMenuComponent().menu()"
+                [matMenuTriggerFor]="desktopAddPlaylistMenu.menu()"
                 [matTooltip]="'HOME.URL_UPLOAD.ADD_PLAYLIST' | translate"
                 data-test-id="add-playlist"
             >
                 <mat-icon>add</mat-icon>
             </button>
             <app-add-playlist-menu
+                #desktopAddPlaylistMenu
                 (playlistTypeSelected)="openAddPlaylistDialog($event)"
             />
             <button
@@ -64,22 +87,22 @@
             >
                 <mat-icon>history</mat-icon>
             </button>
-            <button
-                mat-icon-button
-                #filterMenuTrigger="matMenuTrigger"
-                [matMenuTriggerFor]="filterSortMenuComponent().menu()"
-                [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
-                [matBadge]="filterSortMenuComponent().activeFiltersCount"
-                [matBadgeHidden]="
-                    filterSortMenuComponent().activeFiltersCount === 0
-                "
-                matBadgeSize="small"
-                matBadgeColor="accent"
-                data-test-id="filter-sort-playlists"
-            >
-                <mat-icon>tune</mat-icon>
-            </button>
-            <app-filter-sort-menu [menuTrigger]="filterMenuTrigger" />
+            @if (showFilterControls) {
+                <button
+                    mat-icon-button
+                    #desktopFilterTrigger="matMenuTrigger"
+                    [matMenuTriggerFor]="desktopFilterMenu.menu()"
+                    [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
+                    [matBadge]="desktopFilterMenu.activeFiltersCount"
+                    [matBadgeHidden]="desktopFilterMenu.activeFiltersCount === 0"
+                    matBadgeSize="small"
+                    matBadgeColor="accent"
+                    data-test-id="filter-sort-playlists"
+                >
+                    <mat-icon aria-hidden="false">tune</mat-icon>
+                </button>
+                <app-filter-sort-menu #desktopFilterMenu [menuTrigger]="desktopFilterTrigger" />
+            }
             @if (isDesktop) {
                 <button
                     mat-icon-button
@@ -162,13 +185,13 @@
                 <mat-icon>more_vert</mat-icon>
             </button>
             <app-add-playlist-menu
+                #mobileAddPlaylistMenu
                 (playlistTypeSelected)="openAddPlaylistDialog($event)"
             />
-            <app-filter-sort-menu [menuTrigger]="mobileFilterTrigger" />
             <mat-menu #mobileActionsMenu="matMenu">
                 <button
                     mat-menu-item
-                    [matMenuTriggerFor]="addPlaylistMenuComponent().menu()"
+                    [matMenuTriggerFor]="mobileAddPlaylistMenu.menu()"
                     data-test-id="mobile-add-playlist"
                 >
                     <mat-icon>add</mat-icon>
@@ -204,20 +227,24 @@
                         (Ctrl/Cmd+R)</span
                     >
                 </button>
-                <button
-                    mat-menu-item
-                    #mobileFilterTrigger="matMenuTrigger"
-                    [matMenuTriggerFor]="filterSortMenuComponent().menu()"
-                    data-test-id="mobile-filter-sort"
-                >
-                    <mat-icon
-                        [matBadge]="filterSortMenuComponent().activeFiltersCount"
-                        [matBadgeHidden]="filterSortMenuComponent().activeFiltersCount === 0"
-                        matBadgeSize="small"
-                        matBadgeColor="accent"
-                    >tune</mat-icon>
-                    <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
-                </button>
+                @if (showFilterControls) {
+                    <button
+                        mat-menu-item
+                        #mobileFilterTrigger="matMenuTrigger"
+                        [matMenuTriggerFor]="mobileFilterMenu.menu()"
+                        data-test-id="mobile-filter-sort"
+                    >
+                        <mat-icon
+                            [matBadge]="mobileFilterMenu.activeFiltersCount"
+                            [matBadgeHidden]="mobileFilterMenu.activeFiltersCount === 0"
+                            matBadgeSize="small"
+                            matBadgeColor="accent"
+                            aria-hidden="false"
+                        >tune</mat-icon>
+                        <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
+                    </button>
+                    <app-filter-sort-menu #mobileFilterMenu [menuTrigger]="mobileFilterTrigger" />
+                }
                 <mat-divider />
                 <button
                     mat-menu-item
@@ -261,5 +288,4 @@
                 }
             </mat-menu>
         </div>
-    }
 </div>

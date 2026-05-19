@@ -59,6 +59,7 @@ type LiveChannelSortMode = 'server' | 'name-asc' | 'name-desc';
 export class PortalChannelsListComponent implements AfterViewInit, OnDestroy {
     readonly playClicked = output<any>();
     readonly sortMode = input<LiveChannelSortMode>('server');
+    readonly showSearch = input<boolean>(true);
 
     readonly xtreamStore = inject(XtreamStore);
     private readonly favoritesService = inject(FavoritesService);

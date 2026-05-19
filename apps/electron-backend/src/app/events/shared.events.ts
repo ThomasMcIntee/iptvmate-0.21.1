@@ -166,8 +166,8 @@ ipcMain.handle(
  * @param referer referer to use
  */
 export function setUserAgent(userAgent: string, referer?: string): void {
-    if (userAgent === undefined || userAgent === null || userAgent === '') {
-        userAgent = this.defaultUserAgent;
+    if (!userAgent) {
+        return; // Exit early if no user agent provided
     }
 
     // Remove trailing slash from referer if it exists

@@ -1,4 +1,17 @@
 @if (items?.length > 0) {
+    <div class="search-panel">
+        <mat-form-field class="search-bar">
+            <mat-label>{{ 'CHANNELS.SEARCH_CHANNEL' | translate }}</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+                matInput
+                type="search"
+                [placeholder]="'CHANNELS.SEARCH_CHANNEL' | translate"
+                [ngModel]="searchPhrase()"
+                (ngModelChange)="onSearchChange($event)"
+            />
+        </mat-form-field>
+    </div>
     <div class="grid">
         @for (
             item of items

@@ -60,8 +60,22 @@
     app-region: no-drag;
 }
 
+.filter-button {
+    height: 36px;
+
+    .mat-icon {
+        margin-right: 4px;
+    }
+}
+
 .category-search {
     width: 240px;
+}
+
+@media (max-width: 900px) {
+    .filter-button span {
+        display: none;
+    }
 }
 
 .scrollable-content {

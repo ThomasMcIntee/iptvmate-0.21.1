@@ -6,11 +6,13 @@ import { Store } from '@ngrx/store';
 import { StorageMap } from '@ngx-pwa/local-storage';
 import { TranslateService } from '@ngx-translate/core';
 import {
+    catchError,
     combineLatestWith,
     EMPTY,
     filter,
     firstValueFrom,
     map,
+    of,
     switchMap,
     tap,
     withLatestFrom,
@@ -211,7 +213,15 @@ export class PlaylistEffects {
                         PlaylistActions.loadPlaylistsSuccess({
                             playlists,
                         })
-                    )
+                    ),
+                    catchError((error: unknown) => {
+                        console.error('[PlaylistEffects] Failed to load playlists', error);
+                        return of(
+                            PlaylistActions.loadPlaylistsSuccess({
+                                playlists: [],
+                            })
+                        );
+                    })
                 )
             )
         );

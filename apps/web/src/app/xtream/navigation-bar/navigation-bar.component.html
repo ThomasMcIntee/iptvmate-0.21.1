@@ -76,28 +76,55 @@
       @if (sortVisible) {
         <div class="sort">
           <button
-            mat-icon-button
+            mat-stroked-button
+            class="sort-button"
             [matTooltip]="'CHANNELS.SORT_BY' | translate"
             [matMenuTriggerFor]="sortPlaylistMenu"
             data-test-id="sort-playlist"
             >
             <mat-icon>sort</mat-icon>
+            <span>{{ 'CHANNELS.SORT_BY' | translate }}</span>
           </button>
         </div>
       }
       @if (searchVisible) {
-        <div class="search">
-          <mat-form-field class="search-input">
-            <mat-icon matPrefix>search</mat-icon>
-            <input
-              matInput
-              placeholder="Search by name"
-              type="search"
-              [ngModel]="searchPhrase()"
-              (ngModelChange)="searchPhraseUpdate.next($event)"
-              />
-          </mat-form-field>
-        </div>
+        @if (!isSearchOpen) {
+          <div class="search-toggle">
+            <button
+              mat-stroked-button
+              class="filter-button"
+              (click)="openSearch()"
+              [matTooltip]="'HOME.FILTER_BY_NAME' | translate"
+              data-test-id="toggle-filter"
+              >
+              <mat-icon>filter_alt</mat-icon>
+              <span>{{ 'HOME.FILTER_BY_NAME' | translate }}</span>
+            </button>
+          </div>
+        } @else {
+          <div class="search">
+            <mat-form-field class="search-input">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                [placeholder]="'HOME.FILTER_BY_NAME' | translate"
+                [attr.aria-label]="'HOME.FILTER_BY_NAME' | translate"
+                [title]="'HOME.FILTER_BY_NAME' | translate"
+                type="search"
+                [ngModel]="searchPhrase()"
+                (ngModelChange)="searchPhraseUpdate.next($event)"
+                />
+              <button
+                mat-icon-button
+                matSuffix
+                (click)="closeSearch()"
+                [matTooltip]="'CLOSE' | translate"
+                >
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+        }
       }
     </div>
     <mat-menu #sortPlaylistMenu="matMenu">

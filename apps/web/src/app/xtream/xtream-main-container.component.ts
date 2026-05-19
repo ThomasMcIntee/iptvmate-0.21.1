@@ -68,6 +68,24 @@ function b64DecodeUnicode(str: string) {
     );
 }
 
+function toIsoFromUnixTimestamp(value?: string): string | null {
+    if (!value) {
+        return null;
+    }
+
+    let parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+        return null;
+    }
+
+    // Subtract 2 hours (7200 seconds) to correct for UTC+2 server offset
+    parsed = parsed - 7200;
+
+    // Xtream may return seconds, but be defensive if milliseconds are provided.
+    const millis = parsed > 1_000_000_000_000 ? parsed : parsed * 1000;
+    return new Date(millis).toISOString();
+}
+
 const ContentTypes = {
     [ContentType.ITV]: {
         getContentAction: XtreamCodeActions.GetLiveStreams,
@@ -158,6 +176,7 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
     settings = this.settingsStore;
     isLoading = true;
     searchPhrase = this.portalStore.searchPhrase();
+    readonly globalSearchPhrase = this.portalStore.searchPhrase;
     contentId: number;
     errorViewInfo = { title: '', message: '' };
     streamUrl: string;
@@ -265,6 +284,9 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
                     (response.payload as any).epg_listings as EpgItem[]
                 ).map((i) => ({
                     ...i,
+                    start: toIsoFromUnixTimestamp(i.start_timestamp) ?? i.start,
+                    end: toIsoFromUnixTimestamp(i.stop_timestamp) ?? i.end,
+                    stop: toIsoFromUnixTimestamp(i.stop_timestamp) ?? i.stop,
                     title: b64DecodeUnicode(i.title).trim(),
                     description: b64DecodeUnicode(i.description).trim(),
                 }));
@@ -573,7 +595,11 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
             this.isLoading = true;
         }
         const playlist = this.currentPlaylist() as Playlist;
-        if (!playlist || !playlist._id) return;
+        if (!playlist || !playlist._id) {
+            this.isLoading = false;
+            console.warn('[XtreamMainContainer] sendRequest called without an active playlist');
+            return;
+        }
         const { serverUrl, username, password } = playlist;
         this.dataService.sendIpcEvent(XTREAM_REQUEST, {
             url: serverUrl,
@@ -586,6 +612,7 @@ export class XtreamMainContainerComponent implements OnInit, OnDestroy {
     }
 
     setSearchPhrase(searchPhrase: string) {
+        this.portalStore.setSearchPhrase(searchPhrase);
         this.searchPhrase = searchPhrase;
     }
 

@@ -18,6 +18,15 @@
                 {{ selectedCategoryInfo()?.name }} ({{ selectedCategoryInfo()?.count }})
             </h2>
             <button
+                mat-stroked-button
+                class="filter-button"
+                [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
+                (click)="toggleChannelSearch()"
+            >
+                <mat-icon>filter_list</mat-icon>
+                <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
+            </button>
+            <button
                 mat-icon-button
                 [matMenuTriggerFor]="channelSortMenu"
                 [matTooltip]="'Sort: ' + liveChannelSortLabel()"
@@ -52,6 +61,15 @@
                 [subtitle]="'Xtream Code'"
             />
             <button
+                mat-stroked-button
+                class="filter-button"
+                [matTooltip]="'HOME.FILTER_AND_SORT' | translate"
+                (click)="toggleChannelSearch()"
+            >
+                <mat-icon>filter_list</mat-icon>
+                <span>{{ 'HOME.FILTER_AND_SORT' | translate }}</span>
+            </button>
+            <button
                 mat-icon-button
                 class="manage-categories-btn"
                 (click)="openCategoryManagement()"
@@ -61,14 +79,28 @@
             </button>
         }
     </div>
+    @if (!selectedCategoryId() && showCategorySearch()) {
+        <mat-form-field class="category-search" appearance="outline" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+                matInput
+                type="search"
+                spellcheck="false"
+                [ngModel]="categorySearchTerm()"
+                (ngModelChange)="onCategorySearchChange($event)"
+                placeholder="Search categories"
+            />
+        </mat-form-field>
+    }
     @if (selectedCategoryId()) {
         <app-portal-channels-list
+            [showSearch]="showChannelSearch()"
             [sortMode]="liveChannelSortMode()"
             (playClicked)="playLive($event)"
         />
     } @else {
         <app-category-view
-            [items]="categories()"
+            [items]="filteredCategories()"
             [itemCounts]="categoryItemCounts()"
             (categoryClicked)="selectCategory($event)"
             [showCounts]="true"

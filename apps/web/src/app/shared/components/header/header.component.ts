@@ -1,11 +1,9 @@
 import {
     Component,
     HostBinding,
-    OnInit,
     inject,
     input,
     output,
-    viewChild,
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -15,13 +13,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { DataService } from 'services';
 import { GLOBAL_FAVORITES_PLAYLIST_ID } from 'shared-interfaces';
 //import { shell } from 'electron';
 import { AddPlaylistMenuComponent, PlaylistType } from 'components';
-import { HomeComponent } from '../../../home/home.component';
 import { AboutDialogComponent } from '../about-dialog/about-dialog.component';
 import { AddPlaylistDialogComponent } from '../add-playlist/add-playlist-dialog.component';
 import { FilterSortMenuComponent } from '../filter-sort-menu/filter-sort-menu.component';
@@ -44,22 +41,16 @@ import { FilterSortMenuComponent } from '../filter-sort-menu/filter-sort-menu.co
         TranslateModule,
     ],
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent {
     @HostBinding('class.home-header') get isHomeHeader() {
         return this.isHome;
     }
 
-    private activatedRoute = inject(ActivatedRoute);
     private dialog = inject(MatDialog);
     private dataService = inject(DataService);
     private router = inject(Router);
 
-    readonly addPlaylistMenuComponent = viewChild.required(
-        AddPlaylistMenuComponent
-    );
-    readonly filterSortMenuComponent = viewChild.required(
-        FilterSortMenuComponent
-    );
+
     readonly isDesktop = !!window.electron;
     readonly title = input.required<string>();
     readonly subtitle = input.required<string>();
@@ -67,11 +58,22 @@ export class HeaderComponent implements OnInit {
     readonly globalSearchClicked = output<void>();
     readonly globalRecentClicked = output<void>();
 
-    isHome = true;
+    get isHome(): boolean {
+        const url = this.router.url || '';
+        return url === '' || url === '/' || url.startsWith('/?');
+    }
 
-    ngOnInit() {
-        this.isHome =
-            this.activatedRoute.snapshot.component.name === HomeComponent.name;
+    get showFilterControls(): boolean {
+        const url = this.router.url || '';
+        // Tune icon (desktop/mobile): Home + M3U playlist pages.
+        // Xtream/Portal pages have their own dedicated in-page filters.
+        return this.isHome || /^\/(playlists(?:\/|$)|iptv(?:\/|$))/.test(url);
+    }
+
+    get showFilterRow(): boolean {
+        // Header search + quick-filter row: only M3U playlist pages, not Home.
+        const url = this.router.url || '';
+        return /^\/(playlists(?:\/|$)|iptv(?:\/|$))/.test(url);
     }
 
     /**

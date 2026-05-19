@@ -30,10 +30,14 @@
 
     .breadcrumbs {
         display: flex;
+        min-width: 0;
+        overflow: hidden;
+        flex: 1;
 
         div {
             display: flex;
             align-items: center;
+            white-space: nowrap;
 
             &:not(:last-child)::after {
                 display: none;
@@ -48,10 +52,35 @@
 
     .search-container {
         display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
     .search {
         text-align: center;
+    }
+
+    .search-toggle {
+        display: flex;
+        align-items: center;
+    }
+
+    .filter-button {
+        height: 30px;
+        border-color: rgb(63 81 181 / 45%) !important;
+
+        .mat-icon {
+            margin-right: 4px;
+        }
+    }
+
+    .sort-button {
+        height: 30px;
+
+        .mat-icon {
+            margin-right: 4px;
+        }
     }
 }
 
@@ -104,5 +133,12 @@
 
     .label {
         display: none;
+    }
+
+    #sub-panel {
+        .filter-button span,
+        .sort-button span {
+            display: none;
+        }
     }
 }

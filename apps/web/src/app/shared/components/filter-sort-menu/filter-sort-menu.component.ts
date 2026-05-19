@@ -13,6 +13,7 @@ import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { Store } from '@ngrx/store';
 import { TranslateModule } from '@ngx-translate/core';
 import { FilterActions, selectActiveTypeFilters } from 'm3u-state';
+import { of } from 'rxjs';
 import { SortBy, SortOrder, SortService } from 'services';
 
 @Component({
@@ -25,7 +26,7 @@ export class FilterSortMenuComponent {
     private store = inject(Store);
     private sortService = inject(SortService);
 
-    readonly menu = viewChild.required<MatMenu>('filterSortMenu');
+    readonly menu = viewChild<MatMenu>('filterSortMenu');
     readonly menuTrigger = input<MatMenuTrigger>();
     readonly filterChanged = output<void>();
 
@@ -56,10 +57,15 @@ export class FilterSortMenuComponent {
 
     readonly SortBy = SortBy;
     readonly SortOrder = SortOrder;
+    private readonly defaultSortOptions = {
+        by: SortBy.DATE_ADDED,
+        order: SortOrder.DESC,
+    };
+    private readonly sortOptions$ = this.sortService?.getSortOptions?.();
     private readonly currentSortOptions = toSignal(
-        this.sortService.getSortOptions(),
+        this.sortOptions$ ?? of(this.defaultSortOptions),
         {
-            requireSync: true,
+            initialValue: this.defaultSortOptions,
         }
     );
 

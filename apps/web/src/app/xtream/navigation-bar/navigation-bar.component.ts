@@ -84,11 +84,13 @@ export class NavigationBarComponent implements OnChanges {
     currentPlaylist = this.store.selectSignal(selectCurrentPlaylist);
     sortType = this.portalStore.sortType;
     isFavoriteStream = false;
+    isSearchOpen = false;
     settingsStore = inject(SettingsStore);
 
     constructor() {
+        this.isSearchOpen = !!this.searchPhrase()?.trim();
         this.searchPhraseUpdate
-            .pipe(debounceTime(600), distinctUntilChanged())
+            .pipe(debounceTime(150), distinctUntilChanged())
             .subscribe((value) => {
                 this.setSearchText(value);
             });
@@ -101,6 +103,7 @@ export class NavigationBarComponent implements OnChanges {
     }
 
     processBreadcrumbClick(item: Breadcrumb) {
+        this.isSearchOpen = false;
         this.setSearchText('');
         this.breadcrumbClicked.emit(item);
     }
@@ -114,7 +117,17 @@ export class NavigationBarComponent implements OnChanges {
         else this.searchTextChanged.emit(text);
     }
 
+    openSearch() {
+        this.isSearchOpen = true;
+    }
+
+    closeSearch() {
+        this.isSearchOpen = false;
+        this.setSearchText('');
+    }
+
     changeContentType(type: ContentType) {
+        this.isSearchOpen = false;
         this.setSearchText('');
         this.contentTypeChanged.emit(type);
     }
@@ -144,6 +157,14 @@ export class NavigationBarComponent implements OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
+        if (changes.searchVisible && !this.searchVisible) {
+            this.closeSearch();
+        }
+
+        if (this.searchPhrase()?.trim()) {
+            this.isSearchOpen = true;
+        }
+
         if (changes.activeLiveStream && this.activeLiveStream) {
             this.checkFavorite();
         }

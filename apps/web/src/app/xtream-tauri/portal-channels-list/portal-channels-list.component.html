@@ -1,15 +1,18 @@
-<div class="search-panel">
-    <mat-form-field class="search-bar" subscriptSizing="dynamic">
-        <mat-icon matPrefix>search</mat-icon>
-        <input
-            matInput
-            spellcheck="false"
-            type="search"
-            [placeholder]="'CHANNELS.SEARCH_CHANNEL' | translate"
-            [(ngModel)]="searchString"
-        />
-    </mat-form-field>
-</div>
+@if (showSearch()) {
+    <div class="search-panel">
+        <mat-form-field class="search-bar" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+                matInput
+                spellcheck="false"
+                type="search"
+                [placeholder]="'CHANNELS.SEARCH_CHANNEL' | translate"
+                [ngModel]="searchString()"
+                (ngModelChange)="searchString.set($event)"
+            />
+        </mat-form-field>
+    </div>
+}
 
 <div class="channels-list">
     <cdk-virtual-scroll-viewport

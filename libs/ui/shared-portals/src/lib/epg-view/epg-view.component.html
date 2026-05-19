@@ -10,8 +10,8 @@
                 {{ item.description }}
             </div>
             <div matListItemLine>
-                {{ item.start | date: 'HH:mm' }} -
-                {{ item.stop ?? item.end | date: 'HH:mm (dd.MM.yyyy)' }}
+                {{ formatStart(item) }} -
+                {{ formatEnd(item) }}
             </div>
             <span matListItemMeta>
                 <button mat-icon-button (click)="showDetails(item)">

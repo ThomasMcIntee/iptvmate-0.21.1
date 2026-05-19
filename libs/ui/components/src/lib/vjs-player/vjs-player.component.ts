@@ -17,6 +17,23 @@ import 'videojs-quality-selector-hls';
 
 type PlayerSource = { src: string; type?: string };
 
+type ElectronApi = {
+    getStreamProxyPort?: () => Promise<number>;
+};
+
+type BuildProxyUrlOptions = {
+    forceTranscode?: boolean;
+};
+
+interface PlaybackError {
+    stage: 'initial' | 'type-fallback' | 'proxy-fallback' | 'final';
+    code?: number;
+    message?: string;
+    sourceUrl?: string;
+    sourceType?: string;
+    timestamp: number;
+}
+
 /**
  * This component contains the implementation of video player that is based on video.js library
  */
@@ -47,6 +64,123 @@ export class VjsPlayerComponent
     private pendingSources: PlayerSource[] | null = null;
     private isDestroyed = false;
     private lastAppliedSourcesKey: string | null = null;
+    private shouldRequestProxyTranscode = false;
+    private playbackErrors: PlaybackError[] = [];
+    private currentSourceUrl: string | null = null;
+    private noVideoFallbackAttemptedFor: string | null = null;
+
+    /**
+     * Detects if a source URL is from a remote IPTV provider (Xtream, Stalker, etc.)
+     * These URLs often have redirect/SSL issues and should use proxy first
+     */
+    private isRemoteIptvSource(sourceUrl: string): boolean {
+        // Xtream Codes VOD stream URLs
+        if (sourceUrl.includes('/movie/') || sourceUrl.includes('/series/')) {
+            return true;
+        }
+        // Stalker portal stream URLs
+        if (sourceUrl.includes('/live/') || sourceUrl.includes('/stb/')) {
+            return true;
+        }
+        // Any HTTPS IPTV provider URL (potential SSL issues)
+        if (
+            sourceUrl.startsWith('https://') &&
+            (sourceUrl.includes('cdn') || sourceUrl.includes('vod') ||
+             sourceUrl.includes('stream') || sourceUrl.includes('live'))
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Categorizes and logs player errors with detailed context
+     */
+    private logPlaybackError(
+        stage: PlaybackError['stage'],
+        sourceUrl: string,
+        sourceType?: string,
+        errorCode?: number,
+        errorMessage?: string
+    ): void {
+        const error: PlaybackError = {
+            stage,
+            code: errorCode,
+            message: errorMessage,
+            sourceUrl: this.maskUrl(sourceUrl),
+            sourceType,
+            timestamp: Date.now(),
+        };
+
+        this.playbackErrors.push(error);
+
+        const baseInfo = `[VjsPlayer] ${stage.toUpperCase()} - ${this.maskUrl(sourceUrl)}`;
+        const codeStr = errorCode ? ` (Code: ${errorCode})` : '';
+        const typeStr = sourceType ? ` | Type: ${sourceType}` : '';
+
+        if (errorCode === 4 || errorMessage?.includes('MEDIA_ERR_SRC_NOT_SUPPORTED')) {
+            console.error(
+                `${baseInfo}${codeStr} - Format not supported or source unreachable${typeStr}. ` +
+                    'This could indicate: (1) SSL/TLS certificate issue, (2) Network unreachable, (3) Format incompatibility.'
+            );
+        } else if (errorMessage?.includes('ERR_SSL')) {
+            console.error(
+                `${baseInfo}${codeStr} - SSL/TLS Error${typeStr}. The stream server may not support modern TLS versions. ` +
+                    'Consider: (1) Using proxy fallback, (2) Checking server SSL configuration, (3) Manual codec detection.'
+            );
+        } else if (errorCode === 0) {
+            console.error(
+                `${baseInfo}${codeStr} - Aborted by user or network${typeStr}`
+            );
+        } else {
+            console.error(
+                `${baseInfo}${codeStr} - ${errorMessage || 'Unknown error'}${typeStr}`
+            );
+        }
+    }
+
+    /**
+     * Masks sensitive URL info for logging (shows domain only)
+     */
+    private maskUrl(url: string): string {
+        try {
+            const urlObj = new URL(url);
+            return `${urlObj.protocol}//${urlObj.host}/...`;
+        } catch {
+            return url.substring(0, 50) + (url.length > 50 ? '...' : '');
+        }
+    }
+
+    /**
+     * Logs summary of all playback errors encountered
+     */
+    private logErrorSummary(): void {
+        if (this.playbackErrors.length === 0) return;
+
+        console.group('[VjsPlayer] Playback Error Summary');
+        console.log(`Total errors encountered: ${this.playbackErrors.length}`);
+
+        const stages = ['initial', 'type-fallback', 'proxy-fallback', 'final'] as const;
+        stages.forEach((stage) => {
+            const stageErrors = this.playbackErrors.filter((e) => e.stage === stage);
+            if (stageErrors.length > 0) {
+                console.log(
+                    `  ${stage}: ${stageErrors.length} error(s) - ` +
+                        stageErrors.map((e) => `Code ${e.code}`).join(', ')
+                );
+            }
+        });
+
+        if (this.currentSourceUrl) {
+            console.log(`Last attempted source: ${this.maskUrl(this.currentSourceUrl)}`);
+        }
+
+        console.log(
+            'Recommendations: Check SSL config, network connectivity, and codec support. ' +
+                'Enable verbose logging in player config for detailed diagnostics.'
+        );
+        console.groupEnd();
+    }
 
     ngAfterViewInit(): void {
         this.initializePlayer();
@@ -61,6 +195,19 @@ export class VjsPlayerComponent
         if (!playerElement?.isConnected) {
             return;
         }
+
+        // Log codec support to diagnose playback issues
+        const testVideo = document.createElement('video');
+        const hevc = testVideo.canPlayType('video/mp4; codecs="hvc1"');
+        const hevcAlt = testVideo.canPlayType('video/mp4; codecs="hev1"');
+        this.shouldRequestProxyTranscode = !hevc && !hevcAlt;
+        console.log('[VjsPlayer] Codec support:', {
+            h264: testVideo.canPlayType('video/mp4; codecs="avc1.42E01E"'),
+            hevc,
+            hevcAlt,
+            av1: testVideo.canPlayType('video/mp4; codecs="av01.0.08M.08"'),
+            requestProxyTranscode: this.shouldRequestProxyTranscode,
+        });
 
         const initialSources = this.normalizeSources(
             this.pendingSources ?? this.options?.sources
@@ -234,7 +381,8 @@ export class VjsPlayerComponent
 
     private setPlayerSource(
         sourcesInput: PlayerSource[] | PlayerSource,
-        allowTypeFallback = true
+        allowTypeFallback = true,
+        allowProxyFallback = true
     ): void {
         if (!this.player) {
             return;
@@ -247,9 +395,90 @@ export class VjsPlayerComponent
 
         const nextSourcesKey = this.getSourcesKey(normalizedSources);
         if (this.lastAppliedSourcesKey === nextSourcesKey) {
+            console.log('Source already applied, skipping duplicate:', nextSourcesKey);
             return;
         }
         this.lastAppliedSourcesKey = nextSourcesKey;
+        this.noVideoFallbackAttemptedFor = null;
+
+        console.log(
+            'Setting player source:',
+            normalizedSources,
+            'allowTypeFallback:',
+            allowTypeFallback,
+            'allowProxyFallback:',
+            allowProxyFallback
+        );
+
+        this.currentSourceUrl = normalizedSources[0]?.src ?? null;
+
+        // For remote IPTV sources (Xtream, Stalker), try proxy FIRST to avoid SSL/redirect issues
+        // Skip type fallback on first attempt since proxy handles encoding/format negotiation
+        if (normalizedSources.length === 1) {
+            const source = normalizedSources[0];
+            const isAlreadyProxied = source.src.includes('/stream?url=');
+            if (!isAlreadyProxied && this.isRemoteIptvSource(source.src)) {
+                console.log(
+                    '[VjsPlayer] Detected remote IPTV source - prioritizing proxy playback',
+                    { url: this.maskUrl(source.src) }
+                );
+                // Build proxy URL immediately and use it as the primary source
+                void this.buildProxyUrl(source.src, source.type).then((proxiedUrl) => {
+                    if (proxiedUrl) {
+                        console.log('[VjsPlayer] Using proxy as primary source for IPTV stream');
+                        // Pass the resolved MIME type so the browser doesn't reject the
+                        // proxy URL immediately (it has no file extension to sniff from).
+                        const isTranscodedProxy = proxiedUrl.includes('transcode=1');
+                        const resolvedType = isTranscodedProxy
+                            ? 'video/mp2t'
+                            : source.type || this.inferMimeType(source.src);
+                        // Apply proxy source directly to avoid recursive setPlayerSource()
+                        // calls toggling keys between original/proxy URLs.
+                        this.setPlayerSourceDirect(
+                            [{ src: proxiedUrl, type: resolvedType }],
+                            true,  // Allow type fallback for proxy responses
+                            true   // Allow one-shot proxy->transcode retry on failure
+                        );
+                    } else {
+                        console.warn(
+                            '[VjsPlayer] Proxy not available - falling back to direct source'
+                        );
+                        // Proxy not available, try direct with full fallback chain
+                        this.setPlayerSourceDirect(
+                            normalizedSources,
+                            allowTypeFallback,
+                            allowProxyFallback
+                        );
+                    }
+                });
+                return;
+            }
+        }
+
+        // Standard playback for local/direct sources
+        this.setPlayerSourceDirect(normalizedSources, allowTypeFallback, allowProxyFallback);
+    }
+
+    /**
+     * Internal method for standard source playback with fallback chain
+     */
+    private setPlayerSourceDirect(
+        normalizedSources: PlayerSource[],
+        allowTypeFallback = true,
+        allowProxyFallback = true
+    ): void {
+        if (!this.player) {
+            return;
+        }
+
+        console.log(
+            'Setting player source (direct):',
+            normalizedSources,
+            'allowTypeFallback:',
+            allowTypeFallback,
+            'allowProxyFallback:',
+            allowProxyFallback
+        );
 
         if (
             allowTypeFallback &&
@@ -260,18 +489,151 @@ export class VjsPlayerComponent
             const onSourceError = () => {
                 const currentError = this.player?.error();
                 if (currentError?.code === 4) {
-                    console.warn(
-                        'VideoJS source not supported with explicit type; retrying without type.',
-                        typedSource
+                    const errorMsg =
+                        `Media error ${currentError.code}: ${currentError.message || 'Format not supported'}`;
+                    this.logPlaybackError(
+                        'initial',
+                        typedSource.src,
+                        typedSource.type,
+                        currentError.code,
+                        errorMsg
                     );
-                    this.setPlayerSource({ src: typedSource.src }, false);
+                    console.warn(
+                        '[VjsPlayer] Type fallback: Retrying without explicit type (Code 4 error)',
+                        { src: typedSource.src, type: typedSource.type }
+                    );
+                    this.setPlayerSource(
+                        { src: typedSource.src },
+                        false,
+                        allowProxyFallback
+                    );
                 }
             };
 
             this.player.one('error', onSourceError);
         }
 
+        if (allowProxyFallback && normalizedSources.length === 1) {
+            const directSource = normalizedSources[0];
+            const isHttpSource = /^https?:\/\//i.test(directSource.src);
+            const isAlreadyProxied = directSource.src.includes('/stream?url=');
+            const isTranscodedProxy = directSource.src.includes('transcode=1');
+
+            if (isHttpSource && isAlreadyProxied && !isTranscodedProxy) {
+                const onProxyPassthroughError = async () => {
+                    const currentError = this.player?.error();
+                    if (currentError?.code !== 4) {
+                        return;
+                    }
+
+                    const targetUrl = new URL(directSource.src).searchParams.get('url');
+                    if (!targetUrl) {
+                        return;
+                    }
+
+                    this.noVideoFallbackAttemptedFor = directSource.src;
+
+                    console.warn(
+                        '[VjsPlayer] Proxy passthrough failed - retrying with transcode=1',
+                        { source: this.maskUrl(targetUrl) }
+                    );
+
+                    const transcodedProxyUrl = await this.buildProxyUrl(
+                        targetUrl,
+                        directSource.type,
+                        { forceTranscode: true }
+                    );
+
+                    if (transcodedProxyUrl) {
+                        this.setPlayerSource(
+                                    { src: transcodedProxyUrl },
+                            true,
+                            false
+                        );
+                    }
+                };
+
+                this.player.one('error', () => {
+                    void onProxyPassthroughError();
+                });
+            }
+
+            console.log(
+                '[VjsPlayer] Proxy fallback check:',
+                'isHttpSource:',
+                isHttpSource,
+                'isAlreadyProxied:',
+                isAlreadyProxied,
+                'isTranscodedProxy:',
+                isTranscodedProxy
+            );
+
+            if (isHttpSource && !isAlreadyProxied) {
+                const onProxyFallbackError = async () => {
+                    const currentError = this.player?.error();
+                    if (currentError?.code !== 4) {
+                        console.warn(
+                            '[VjsPlayer] Proxy fallback skipped - error is not format-related:',
+                            'Code:',
+                            currentError?.code,
+                            'Message:',
+                            currentError?.message
+                        );
+                        this.logPlaybackError(
+                            'type-fallback',
+                            directSource.src,
+                            directSource.type,
+                            currentError?.code,
+                            currentError?.message
+                        );
+                        return;
+                    }
+
+                    // Type fallback has already been attempted (or wasn't needed).
+                    // Now try proxy fallback for Code 4 errors.
+                    this.logPlaybackError(
+                        'type-fallback',
+                        directSource.src,
+                        directSource.type,
+                        currentError.code,
+                        currentError.message
+                    );
+
+                    const proxiedUrl = await this.buildProxyUrl(
+                        directSource.src,
+                        directSource.type
+                    );
+                    if (!proxiedUrl) {
+                        console.error(
+                            '[VjsPlayer] Failed to build proxy URL - no proxy port available. ' +
+                                'This means the application is running outside Electron mode or proxy is not initialized.'
+                        );
+                        return;
+                    }
+
+                    console.log(
+                        '[VjsPlayer] Attempting proxy fallback...',
+                        {
+                            original: this.maskUrl(directSource.src),
+                            proxied: this.maskUrl(proxiedUrl),
+                            type: directSource.type,
+                        }
+                    );
+                    this.setPlayerSource(
+                        { src: proxiedUrl, type: directSource.type },
+                        true,
+                        false
+                    );
+                };
+
+                this.player.one('error', () => {
+                    void onProxyFallbackError();
+                });
+            }
+        }
+
         this.player.pause();
+        console.log('Calling player.src() with:', normalizedSources);
         this.player.src(normalizedSources as Parameters<typeof this.player.src>[0]);
         this.player.load();
 
@@ -288,15 +650,141 @@ export class VjsPlayerComponent
                 ) {
                     return;
                 }
-                console.warn('VideoJS failed to autoplay after source switch:', err);
+
+                const errorMsg = err instanceof Error ? err.message : String(err);
+                const directSource = normalizedSources[0];
+
+                if (
+                    errorMsg.includes('not supported') ||
+                    errorMsg.includes('no supported source')
+                ) {
+                    console.error(
+                        '[VjsPlayer] FINAL ERROR - No supported format found.',
+                        'Source:',
+                        this.maskUrl(directSource.src),
+                        'Type:',
+                        directSource.type
+                    );
+                    this.logPlaybackError(
+                        'final',
+                        directSource.src,
+                        directSource.type,
+                        4,
+                        errorMsg
+                    );
+                    this.logErrorSummary();
+                } else {
+                    console.error(
+                        '[VjsPlayer] Playback failed:',
+                        errorMsg,
+                        'Source:',
+                        this.maskUrl(directSource.src)
+                    );
+                }
             });
         }
     }
+
+    private async buildProxyUrl(
+        sourceUrl: string,
+        sourceType?: string,
+        options?: BuildProxyUrlOptions
+    ): Promise<string | null> {
+        const electronApi = (globalThis as { electron?: ElectronApi }).electron;
+        if (!electronApi?.getStreamProxyPort) {
+            console.debug(
+                '[VjsPlayer] Electron API not available - proxy disabled. ' +
+                    'Running in PWA mode where external proxy is not supported.'
+            );
+            return null;
+        }
+
+        try {
+            const port = await electronApi.getStreamProxyPort();
+            if (!port) {
+                console.warn(
+                    '[VjsPlayer] No proxy port available - stream proxy server may not be initialized'
+                );
+                return null;
+            }
+
+            const params = new URLSearchParams({ url: sourceUrl });
+            const forceTranscode = options?.forceTranscode === true;
+
+            if (forceTranscode || this.shouldTranscodeProxySource(sourceUrl, sourceType)) {
+                params.set('transcode', '1');
+                console.log(
+                    forceTranscode
+                        ? '[VjsPlayer] Forcing proxy transcode after passthrough failure'
+                        : '[VjsPlayer] Proxy will transcode (HEVC codec not supported)'
+                );
+            }
+            
+            const proxyUrl = `http://127.0.0.1:${port}/stream?${params.toString()}`;
+            console.log(
+                '[VjsPlayer] Built proxy URL successfully',
+                'Port:',
+                port,
+                'Transcode:',
+                params.has('transcode')
+            );
+            return proxyUrl;
+        } catch (e) {
+            console.error(
+                '[VjsPlayer] Failed to get proxy port from Electron API:',
+                e instanceof Error ? e.message : String(e)
+            );
+            return null;
+        }
+    }
+
+    /** Derive a MIME type from a URL's file extension when no explicit type is provided. */
+    private inferMimeType(url: string): string | undefined {
+        const path = url.split('?')[0].toLowerCase();
+        if (/\.mp4$|\.m4v$/.test(path)) return 'video/mp4';
+        if (/\.m3u8$/.test(path)) return 'application/x-mpegURL';
+        if (/\.ts$/.test(path)) return 'video/mp2t';
+        if (/\.mkv$/.test(path)) return 'video/x-matroska';
+        if (/\.mov$/.test(path)) return 'video/quicktime';
+        if (/\.avi$/.test(path)) return 'video/x-msvideo';
+        if (/\.webm$/.test(path)) return 'video/webm';
+        return undefined;
+    }
+
+    private shouldTranscodeProxySource(
+        sourceUrl: string,
+        sourceType?: string
+    ): boolean {
+        // Only transcode if we actually detected missing HEVC support
+        if (!this.shouldRequestProxyTranscode) {
+            return false;
+        }
+
+        const normalizedType = sourceType?.toLowerCase() ?? '';
+        const isMp4Container =
+            /\.(mp4|m4v)(\?|$)/i.test(sourceUrl) || normalizedType.includes('mp4');
+
+        // Do not transcode MP4/M4V by default. Use passthrough first and only
+        // force transcode when passthrough playback actually fails.
+        if (isMp4Container) {
+            return false;
+        }
+
+        // For other formats (MKV, MOV, etc.), allow transcoding as they might contain HEVC
+        return /\.(mov|mkv|avi|wmv|mpeg|mpg|ts)(\?|$)/i.test(sourceUrl);
+    }
+
+
 
     /**
      * Removes the players HTML reference on destroy
      */
     ngOnDestroy(): void {
+        // Log error summary if any playback errors occurred
+        if (this.playbackErrors.length > 0) {
+            this.logErrorSummary();
+        }
+
         this.isDestroyed = true;
         if (this.player) {
             this.player.dispose();

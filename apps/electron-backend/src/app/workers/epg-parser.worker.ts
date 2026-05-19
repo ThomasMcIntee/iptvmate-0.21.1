@@ -5,12 +5,13 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { SaxesParser, SaxesTagPlain } from 'saxes';
 import { Readable } from 'stream';
+import type { ReadableStream as NodeReadableStream } from 'stream/web';
 import { parentPort, workerData } from 'worker_threads';
 import { createGunzip } from 'zlib';
 
 // In packaged app, native modules are in app.asar.unpacked/node_modules
 // which is separate from the worker location in extraResources
-let Database: typeof BetterSqlite3;
+const Database: typeof BetterSqlite3 = loadBetterSqlite3();
 
 function loadBetterSqlite3(): typeof BetterSqlite3 {
     // Try workerData path first (passed from main process)
@@ -37,7 +38,12 @@ function loadBetterSqlite3(): typeof BetterSqlite3 {
     ) {
         const resourcesPath = (
             process as NodeJS.Process & { resourcesPath?: string }
-        ).resourcesPath!;
+        ).resourcesPath;
+
+        if (!resourcesPath) {
+            throw new Error('Electron resourcesPath was unexpectedly unavailable');
+        }
+
         const unpackedPath = join(
             resourcesPath,
             'app.asar.unpacked',
@@ -59,11 +65,8 @@ function loadBetterSqlite3(): typeof BetterSqlite3 {
     }
 
     // Fallback to regular require (development mode)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require('better-sqlite3');
 }
-
-Database = loadBetterSqlite3();
 
 /**
  * Internal parsing types with arrays for XML parsing
@@ -262,7 +265,7 @@ class EpgDatabase {
                         episodeNum
                     );
                     insertedCount++;
-                } catch (err) {
+                } catch {
                     // Skip individual failures (e.g., FK constraint)
                 }
             }
@@ -322,8 +325,8 @@ class StreamingEpgParser {
     private totalPrograms = 0;
 
     // Current element being parsed
-    private currentChannel: Partial<ParsedChannel> | null = null;
-    private currentProgram: Partial<ParsedProgram> | null = null;
+    private currentChannel: ParsedChannel | null = null;
+    private currentProgram: ParsedProgram | null = null;
     private currentTextContent = '';
     private currentLang = '';
 
@@ -375,7 +378,7 @@ class StreamingEpgParser {
 
                 case 'icon':
                     if (this.currentChannel) {
-                        this.currentChannel.icon!.push({
+                        this.currentChannel.icon.push({
                             src: (tag.attributes['src'] as string) || '',
                             width: tag.attributes['width']
                                 ? parseInt(tag.attributes['width'] as string)
@@ -385,7 +388,7 @@ class StreamingEpgParser {
                                 : undefined,
                         });
                     } else if (this.currentProgram) {
-                        this.currentProgram.icon!.push({
+                        this.currentProgram.icon.push({
                             src: (tag.attributes['src'] as string) || '',
                             width: tag.attributes['width']
                                 ? parseInt(tag.attributes['width'] as string)
@@ -408,7 +411,7 @@ class StreamingEpgParser {
                     if (this.currentProgram) {
                         const system =
                             (tag.attributes['system'] as string) || '';
-                        this.currentProgram.rating!.push({ system, value: '' });
+                        this.currentProgram.rating.push({ system, value: '' });
                     }
                     break;
 
@@ -416,7 +419,7 @@ class StreamingEpgParser {
                     if (this.currentProgram) {
                         const system =
                             (tag.attributes['system'] as string) || '';
-                        this.currentProgram.episodeNum!.push({
+                        this.currentProgram.episodeNum.push({
                             system,
                             value: '',
                         });
@@ -435,18 +438,16 @@ class StreamingEpgParser {
             if (this.currentChannel) {
                 switch (tag.name) {
                     case 'display-name':
-                        this.currentChannel.displayName!.push({
+                        this.currentChannel.displayName.push({
                             lang: this.currentLang,
                             value: text,
                         });
                         break;
                     case 'url':
-                        if (text) this.currentChannel.url!.push(text);
+                        if (text) this.currentChannel.url.push(text);
                         break;
                     case 'channel':
-                        this.channels.push(
-                            this.currentChannel as ParsedChannel
-                        );
+                        this.channels.push(this.currentChannel);
                         this.totalChannels++;
                         this.currentChannel = null;
 
@@ -460,19 +461,19 @@ class StreamingEpgParser {
             if (this.currentProgram) {
                 switch (tag.name) {
                     case 'title':
-                        this.currentProgram.title!.push({
+                        this.currentProgram.title.push({
                             lang: this.currentLang,
                             value: text,
                         });
                         break;
                     case 'desc':
-                        this.currentProgram.desc!.push({
+                        this.currentProgram.desc.push({
                             lang: this.currentLang,
                             value: text,
                         });
                         break;
                     case 'category':
-                        this.currentProgram.category!.push({
+                        this.currentProgram.category.push({
                             lang: this.currentLang,
                             value: text,
                         });
@@ -483,24 +484,22 @@ class StreamingEpgParser {
                     case 'value':
                         if (
                             this.elementStack.includes('rating') &&
-                            this.currentProgram.rating!.length > 0
+                            this.currentProgram.rating.length > 0
                         ) {
-                            this.currentProgram.rating![
-                                this.currentProgram.rating!.length - 1
+                            this.currentProgram.rating[
+                                this.currentProgram.rating.length - 1
                             ].value = text;
                         }
                         break;
                     case 'episode-num':
-                        if (this.currentProgram.episodeNum!.length > 0) {
-                            this.currentProgram.episodeNum![
-                                this.currentProgram.episodeNum!.length - 1
+                        if (this.currentProgram.episodeNum.length > 0) {
+                            this.currentProgram.episodeNum[
+                                this.currentProgram.episodeNum.length - 1
                             ].value = text;
                         }
                         break;
                     case 'programme':
-                        this.programs.push(
-                            this.currentProgram as ParsedProgram
-                        );
+                        this.programs.push(this.currentProgram);
                         this.totalPrograms++;
 
                         if (this.programs.length >= PROGRAM_BATCH_SIZE) {
@@ -602,7 +601,9 @@ async function fetchAndParseEpgStreaming(url: string): Promise<void> {
         );
 
         // Convert web stream to Node.js stream
-        const nodeStream = Readable.fromWeb(response.body as any);
+        const nodeStream = Readable.fromWeb(
+            response.body as unknown as NodeReadableStream<Uint8Array>
+        );
 
         return new Promise((resolve, reject) => {
             let dataStream: Readable = nodeStream;
@@ -709,7 +710,11 @@ if (parentPort) {
                 message.type === 'FETCH_EPG' ||
                 message.type === 'FORCE_FETCH'
             ) {
-                await fetchAndParseEpgStreaming(message.url!);
+                if (!message.url) {
+                    throw new Error('Missing EPG URL in worker message');
+                }
+
+                await fetchAndParseEpgStreaming(message.url);
             } else if (message.type === 'CLEAR_EPG') {
                 clearAllEpgData();
             }

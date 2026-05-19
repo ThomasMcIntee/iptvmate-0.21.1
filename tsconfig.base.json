@@ -11,8 +11,10 @@
         "target": "es2015",
         "module": "esnext",
         "lib": ["es2020", "dom"],
+        "forceConsistentCasingInFileNames": true,
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
+        "ignoreDeprecations": "6.0",
         "baseUrl": ".",
         "paths": {
             "@iptvmate/pipes": ["libs/ui/pipes/src/index.ts"],
