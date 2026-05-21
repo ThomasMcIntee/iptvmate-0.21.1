@@ -1,12 +1,149 @@
-#video-player {
+:host {
+    display: block;
     width: 100%;
-    height: calc(100vh - 60px);
+    height: 100%;
+    min-height: 0;
 }
 
+.player-host {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    // Ensure no Electron app-region drag bleeds into the player area.
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+}
+
+.player-host:fullscreen,
+.player-host:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+}
+
+#video-player {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: block;
+}
+
+.player-unmute {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    transition: background 0.15s ease;
+}
+
+.player-unmute:hover,
+.player-unmute:focus-visible {
+    background: rgba(0, 0, 0, 0.9);
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.player-unmute__icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.player-fs {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.25s ease, visibility 0s linear 0s, background 0.15s ease;
+}
+
+.player-host .player-fs.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.player-host:hover .player-fs,
+.player-fs:focus-visible {
+    opacity: 1;
+}
+
+.player-fs:hover {
+    background: rgba(0, 0, 0, 0.95);
+    opacity: 1;
+}
+
+.player-fs__icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.player-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 80%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.player-error__title {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 1.05rem;
+}
+
+.player-error__message {
+    font-size: 0.95rem;
+    opacity: 0.95;
+}
+
+.player-error__hint {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
 
 @media only screen and (max-width: 599px) {
-    #video-player {
-        width: 100%;
+    .player-host {
         height: calc(50vh - 60px) !important;
     }
 }

@@ -98,6 +98,19 @@ export class WebPlayerViewComponent {
             this.forceVideoJsFallback = false;
         }
 
+        // PWA mode: Video.js/VHS frequently fails to engage on proxy-routed live
+        // HLS streams (MEDIA_ERR_SRC_NOT_SUPPORTED) due to nested video.js copies
+        // in plugins and codec probing issues. HLS.js (HTML5 player) handles the
+        // same proxied streams reliably, so prefer it for live content in the
+        // browser build.
+        const isPwa =
+            typeof window !== 'undefined' &&
+            !(window as unknown as { electron?: unknown }).electron;
+        if (isPwa && isLiveLike) {
+            this.forceHtml5Fallback = true;
+            this.forceVideoJsFallback = false;
+        }
+
         void this.applyStreamUrl(streamUrl);
     });
 
@@ -113,7 +126,8 @@ export class WebPlayerViewComponent {
 
         if (
             (this.player === VideoPlayer.ArtPlayer ||
-                this.player === VideoPlayer.Html5Player) &&
+                this.player === VideoPlayer.Html5Player ||
+                this.forceHtml5Fallback) &&
             alternateLiveUrl
         ) {
             const resolvedAlternateLive = await this.getPlayableUrl(alternateLiveUrl);

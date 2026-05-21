@@ -11,8 +11,8 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import '@yangkghjh/videojs-aspect-ratio-panel';
 import videoJs from 'video.js';
+import '@yangkghjh/videojs-aspect-ratio-panel';
 import 'videojs-quality-selector-hls';
 
 type PlayerSource = { src: string; type?: string };

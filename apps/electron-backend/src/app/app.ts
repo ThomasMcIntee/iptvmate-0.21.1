@@ -121,6 +121,33 @@ export default class App {
             mainWindow.center();
         }
 
+        // Allow opening DevTools via F12 or Ctrl/Cmd+Shift+I even when the
+        // application menu is suppressed.
+        mainWindow.webContents.on('before-input-event', (_event, input) => {
+            if (input.type !== 'keyDown') return;
+            const isToggleDevtools =
+                input.key === 'F12' ||
+                ((input.control || input.meta) && input.shift && (input.key === 'I' || input.key === 'i'));
+            const isReload =
+                ((input.control || input.meta) && (input.key === 'R' || input.key === 'r')) ||
+                input.key === 'F5';
+            if (isToggleDevtools) {
+                if (mainWindow.webContents.isDevToolsOpened()) {
+                    mainWindow.webContents.closeDevTools();
+                } else {
+                    // Open in a separate undocked window so it can't be hidden
+                    // behind the main window when the user clicks back.
+                    mainWindow.webContents.openDevTools({ mode: 'detach' });
+                }
+            } else if (isReload) {
+                if (input.shift) {
+                    mainWindow.webContents.reloadIgnoringCache();
+                } else {
+                    mainWindow.webContents.reload();
+                }
+            }
+        });
+
         // if main window is ready to show, close the splash window and show the main window
         mainWindow.once('ready-to-show', () => {
             // In development, delay showing until content loads

@@ -3,7 +3,7 @@
  * between the frontend to the electron backend.
  */
 
-import { app, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import * as os from 'os';
 import { environment } from '../../environments/environment';
 
@@ -18,6 +18,21 @@ ipcMain.handle('get-app-version', () => {
   console.log(`Fetching application version... [v${environment.version}]`);
 
   return environment.version;
+});
+
+// Toggle main window fullscreen state
+ipcMain.handle('TOGGLE_FULLSCREEN', () => {
+  const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+  if (!win) return false;
+  const next = !win.isFullScreen();
+  win.setFullScreen(next);
+  return next;
+});
+
+// Query whether main window is currently fullscreen
+ipcMain.handle('IS_FULLSCREEN', () => {
+  const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+  return win ? win.isFullScreen() : false;
 });
 
 // Handle App termination

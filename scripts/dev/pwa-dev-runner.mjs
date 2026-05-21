@@ -4,6 +4,9 @@ import { Socket } from 'node:net';
 const children = [];
 const isWindows = process.platform === 'win32';
 
+const configArg = process.argv.find((arg) => arg.startsWith('--config='));
+const webConfig = configArg ? configArg.split('=')[1] : 'pwa';
+
 function run(command, args, name) {
     const child = spawn(command, args, {
         stdio: 'inherit',
@@ -36,14 +39,14 @@ function runWebServer() {
         const commandShell = process.env.ComSpec || 'C:\\Windows\\System32\\cmd.exe';
         return run(
             commandShell,
-            ['/d', '/s', '/c', 'pnpm nx serve web --configuration=pwa --no-tui'],
+            ['/d', '/s', '/c', `pnpm nx serve web --configuration=${webConfig} --no-tui`],
             'web'
         );
     }
 
     return run(
         'pnpm',
-        ['nx', 'serve', 'web', '--configuration=pwa', '--no-tui'],
+        ['nx', 'serve', 'web', `--configuration=${webConfig}`, '--no-tui'],
         'web'
     );
 }
@@ -100,7 +103,7 @@ function shutdown(exitCode = 0) {
 process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
 
-console.log('[pwa-dev-runner] Starting proxy on :3000 and web app on :4200');
+console.log(`[pwa-dev-runner] Starting proxy on :3000 and web app on :4200 (config: ${webConfig})`);
 
 const proxyBusy = await isPortInUse(3000);
 if (proxyBusy) {

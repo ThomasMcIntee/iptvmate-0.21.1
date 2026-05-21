@@ -99,6 +99,8 @@ contextBridge.exposeInMainWorld('electron', {
     },
     getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     getStreamProxyPort: () => ipcRenderer.invoke('GET_STREAM_PROXY_PORT'),
+    toggleFullScreen: () => ipcRenderer.invoke('TOGGLE_FULLSCREEN'),
+    isFullScreen: () => ipcRenderer.invoke('IS_FULLSCREEN'),
     platform: process.platform,
     fetchPlaylistByUrl: (url: string, title?: string) =>
         ipcRenderer.invoke('fetch-playlist-by-url', url, title),

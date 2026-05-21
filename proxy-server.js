@@ -10,6 +10,16 @@
 const http = require('http');
 const https = require('https');
 const tls = require('tls');
+const { spawn } = require('child_process');
+
+// FFmpeg binary path. Prefer the bundled @ffmpeg-installer build (deterministic
+// across machines), fall back to system PATH if unavailable.
+let FFMPEG_PATH;
+try {
+    FFMPEG_PATH = require('@ffmpeg-installer/ffmpeg').path;
+} catch {
+    FFMPEG_PATH = 'ffmpeg';
+}
 
 // Permissive TLS options for IPTV providers with legacy SSL/TLS configurations.
 // Many IPTV CDNs use older cipher suites or TLS versions that Node.js rejects by default.
@@ -448,6 +458,125 @@ function handleStream(req, res) {
     createRequest(initialTarget, 0, originalUrl).end();
 }
 
+// ─── /transcode endpoint ──────────────────────────────────────────────────────
+//
+// Live transcode of upstream IPTV streams to fragmented MP4 (fMP4), enabling
+// playback of streams whose codecs the browser cannot decode natively
+// (AC-3 / E-AC-3 / MP2 audio, HEVC video, etc.).
+//
+// Query parameters:
+//   url       — upstream stream URL (m3u8 / ts / mp4 / …). REQUIRED.
+//   reencode  — "audio" (default): copy video, transcode audio to AAC.
+//               "full": re-encode video to H.264 AND audio to AAC.
+//
+// The audio-only mode is dramatically cheaper on CPU and handles the most
+// common IPTV codec issue (AC-3 audio). The "full" mode is used as a second
+// retry from the client when video also needs transcoding (e.g. HEVC).
+function handleTranscode(req, res) {
+    const parsed = new URL(req.url, `http://localhost:${PORT}`);
+    const targetUrl = parsed.searchParams.get('url');
+    const reencode = parsed.searchParams.get('reencode') || 'audio';
+
+    if (!targetUrl) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Missing url parameter');
+        return;
+    }
+
+    console.log(`[transcode] -> ${targetUrl} (mode=${reencode})`);
+
+    const args = [
+        '-hide_banner',
+        '-loglevel', 'warning',
+        '-fflags', '+genpts+discardcorrupt',
+        '-rw_timeout', '15000000', // 15s I/O timeout (microseconds)
+        '-reconnect', '1',
+        '-reconnect_streamed', '1',
+        '-reconnect_delay_max', '5',
+        '-user_agent', 'Mozilla/5.0 (compatible; iptvmate)',
+        '-i', targetUrl,
+    ];
+
+    if (reencode === 'full') {
+        args.push(
+            '-c:v', 'libx264',
+            '-preset', 'ultrafast',
+            '-tune', 'zerolatency',
+            '-crf', '23',
+            '-g', '60',
+            '-pix_fmt', 'yuv420p'
+        );
+    } else {
+        args.push('-c:v', 'copy');
+    }
+
+    args.push(
+        '-c:a', 'aac',
+        '-ac', '2',
+        '-b:a', '128k',
+        '-ar', '48000',
+        '-f', 'mp4',
+        '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
+        'pipe:1'
+    );
+
+    const ff = spawn(FFMPEG_PATH, args, { windowsHide: true });
+    let headersSent = false;
+    let stderrTail = '';
+
+    ff.stdout.on('data', (chunk) => {
+        if (!headersSent) {
+            headersSent = true;
+            res.writeHead(200, {
+                'Content-Type': 'video/mp4',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Access-Control-Allow-Origin': '*',
+                'Connection': 'keep-alive',
+            });
+        }
+        if (!res.write(chunk)) {
+            ff.stdout.pause();
+            res.once('drain', () => ff.stdout.resume());
+        }
+    });
+
+    ff.stderr.on('data', (d) => {
+        const s = d.toString();
+        stderrTail = (stderrTail + s).slice(-4096);
+        if (/error|fail|invalid|denied|refused|unsupported/i.test(s)) {
+            process.stderr.write(`[ffmpeg] ${s}`);
+        }
+    });
+
+    ff.on('error', (err) => {
+        console.error('[transcode] spawn error:', err.message);
+        if (!headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('FFmpeg spawn failed: ' + err.message);
+        } else {
+            res.end();
+        }
+    });
+
+    ff.on('exit', (code, signal) => {
+        console.log(`[transcode] ffmpeg exit code=${code} signal=${signal}`);
+        if (!headersSent) {
+            res.writeHead(502, { 'Content-Type': 'text/plain' });
+            res.end(stderrTail || 'FFmpeg transcoding failed');
+        } else {
+            res.end();
+        }
+    });
+
+    const cleanup = () => {
+        if (!ff.killed) {
+            try { ff.kill('SIGKILL'); } catch { /* noop */ }
+        }
+    };
+    req.on('close', cleanup);
+    res.on('close', cleanup);
+}
+
 // ─── HTTP server ──────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
@@ -470,6 +599,7 @@ const server = http.createServer(async (req, res) => {
         if (parsed.pathname === '/parse')  return await handleParse(query, res);
         if (parsed.pathname === '/stalker') return await handleStalker(query, res);
         if (parsed.pathname === '/stream') return handleStream(req, res);
+        if (parsed.pathname === '/transcode') return handleTranscode(req, res, query);
 
         sendJson(res, 404, { error: 'Not found' });
     } catch (err) {
@@ -485,4 +615,5 @@ server.listen(PORT, () => {
     console.log('  /parse   — M3U/M3U8 playlist parser');
     console.log('  /stalker — Stalker portal proxy');
     console.log('  /stream  — HLS/stream proxy (SSL bypass)');
+    console.log('  /transcode — FFmpeg live transcode to fMP4 (AC-3 / HEVC → AAC / H.264)');
 });
