@@ -19,6 +19,16 @@ export class EpgViewComponent {
     dialog = inject(MatDialog);
 
     private getProgramBounds(item: EpgItem): { start: number; stop: number } {
+        // Prefer the ISO `start` / `stop` strings — the API layer
+        // (xtream-api.service.ts) applies the server-side timezone correction
+        // to those, but leaves the raw `*_timestamp` fields untouched.
+        const startFromIso = new Date(item.start).getTime();
+        const stopFromIso = new Date(item.stop ?? item.end).getTime();
+
+        if (Number.isFinite(startFromIso) && Number.isFinite(stopFromIso)) {
+            return { start: startFromIso, stop: stopFromIso };
+        }
+
         const startFromTimestamp = Number(item.start_timestamp);
         const stopFromTimestamp = Number(item.stop_timestamp);
 
@@ -32,65 +42,38 @@ export class EpgViewComponent {
             };
         }
 
-        const end = item.stop ?? item.end;
-        return {
-            start: new Date(item.start).getTime(),
-            stop: new Date(end).getTime(),
-        };
+        return { start: NaN, stop: NaN };
     }
 
-    private formatTimestamp(
-        timestampMs: number,
-        includeDate = false,
-        _timeZone?: 'UTC'
-    ): string {
-        // Always use America/Chicago (Central Time) for browser EPG
-        const timeZone = 'America/Chicago';
+    private formatTimestamp(timestampMs: number, includeDate = false): string {
+        // Use the browser's local timezone so EPG times match the user's wall clock.
         const timeText = new Intl.DateTimeFormat(undefined, {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false,
-            timeZone,
         }).format(timestampMs);
 
         if (!includeDate) {
             return timeText;
         }
 
-        const dateText = new Intl.DateTimeFormat('de-DE', {
+        const dateText = new Intl.DateTimeFormat(undefined, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
-            timeZone,
         }).format(timestampMs);
 
         return `${timeText} (${dateText})`;
     }
 
     formatStart(item: EpgItem): string {
-        const timestamp = Number(item.start_timestamp);
-        if (Number.isFinite(timestamp)) {
-            const tzOffset = new Date().getTimezoneOffset();
-            console.log('[EPG] start_timestamp:', timestamp, 'decoded ms:', timestamp * 1000, 'date:', new Date(timestamp * 1000).toISOString(), 'browser tz offset (min):', tzOffset, 'tz hours:', tzOffset / 60);
-            return this.formatTimestamp(timestamp * 1000);
-        }
-
-        const fallback = new Date(item.start).getTime();
-        return Number.isFinite(fallback)
-            ? this.formatTimestamp(fallback)
-            : '--:--';
+        const { start } = this.getProgramBounds(item);
+        return Number.isFinite(start) ? this.formatTimestamp(start) : '--:--';
     }
 
     formatEnd(item: EpgItem): string {
-        const timestamp = Number(item.stop_timestamp);
-        if (Number.isFinite(timestamp)) {
-            return this.formatTimestamp(timestamp * 1000, true);
-        }
-
-        const fallback = new Date(item.stop ?? item.end).getTime();
-        return Number.isFinite(fallback)
-            ? this.formatTimestamp(fallback, true)
-            : '--:--';
+        const { stop } = this.getProgramBounds(item);
+        return Number.isFinite(stop) ? this.formatTimestamp(stop, true) : '--:--';
     }
 
     isCurrentProgram(item: EpgItem): boolean {
