@@ -57,6 +57,8 @@ type LiveChannelSortMode = 'server' | 'name-asc' | 'name-desc';
     ],
 })
 export class PortalChannelsListComponent implements AfterViewInit, OnDestroy {
+    private cdr = inject(ChangeDetectorRef);
+
     readonly playClicked = output<any>();
     readonly sortMode = input<LiveChannelSortMode>('server');
     readonly showSearch = input<boolean>(true);
@@ -95,8 +97,6 @@ export class PortalChannelsListComponent implements AfterViewInit, OnDestroy {
     readonly viewport = viewChild(CdkVirtualScrollViewport);
 
     private subscriptions = new Subscription();
-
-    constructor(private cdr: ChangeDetectorRef) {}
 
     trackBy(_index: number, item: XtreamItem) {
         return item.xtream_id;

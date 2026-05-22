@@ -1,15 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
-import {
-    AfterViewInit,
-    Component,
-    computed,
-    effect,
-    inject,
-    Inject,
-    Optional,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -53,6 +43,8 @@ interface SearchResultsData {
     styleUrls: ['./search-results.component.scss'],
 })
 export class SearchResultsComponent implements AfterViewInit {
+    dialogRef = inject<MatDialogRef<SearchResultsComponent>>(MatDialogRef, { optional: true });
+
     readonly searchLayoutComponent = viewChild(SearchLayoutComponent);
     readonly xtreamStore = inject(XtreamStore);
     readonly router = inject(Router);
@@ -113,10 +105,9 @@ export class SearchResultsComponent implements AfterViewInit {
         return groupBy(results, 'playlist_name');
     });
 
-    constructor(
-        @Optional() @Inject(MAT_DIALOG_DATA) data: SearchResultsData,
-        @Optional() public dialogRef: MatDialogRef<SearchResultsComponent>
-    ) {
+    constructor() {
+        const data = inject<SearchResultsData>(MAT_DIALOG_DATA, { optional: true });
+
         this.isGlobalSearch = data?.isGlobalSearch || false;
 
         if (this.isGlobalSearch) {

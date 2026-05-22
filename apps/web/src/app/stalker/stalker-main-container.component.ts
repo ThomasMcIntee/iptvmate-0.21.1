@@ -32,6 +32,9 @@ import { StalkerStore } from './stalker.store';
     ],
 })
 export class StalkerMainContainerComponent {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+
     readonly stalkerStore = inject(StalkerStore);
     private readonly translateService = inject(TranslateService);
 
@@ -53,10 +56,7 @@ export class StalkerMainContainerComponent {
     readonly contentItems = this.stalkerStore.getPaginatedContent;
     readonly isContentLoading = this.stalkerStore.isPaginatedContentLoading;
 
-    constructor(
-        private readonly activatedRoute: ActivatedRoute,
-        private readonly router: Router
-    ) {
+    constructor() {
         // reset category title after changing content type
         effect(() => {
             this.stalkerStore.selectedContentType();

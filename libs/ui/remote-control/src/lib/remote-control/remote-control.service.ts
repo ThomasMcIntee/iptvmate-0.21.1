@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
@@ -24,9 +24,9 @@ export interface RemoteControlStatus {
     providedIn: 'root',
 })
 export class RemoteControlService {
-    private readonly apiBaseUrl = '/api/remote-control';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private readonly apiBaseUrl = '/api/remote-control';
 
     /**
      * Changes to the next channel

@@ -1,5 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, computed, inject, Optional, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -30,6 +30,8 @@ import { createLogger } from '../../shared/utils/logger';
     styleUrl: './recently-viewed.component.scss',
 })
 export class RecentlyViewedComponent {
+    dialogRef? = inject<MatDialogRef<RecentlyViewedComponent>>(MatDialogRef, { optional: true });
+
     private static readonly GROUP_BY_STORAGE_KEY =
         'global-recent-group-by-playlist';
     private static readonly TYPE_FILTERS_STORAGE_KEY =
@@ -108,9 +110,7 @@ export class RecentlyViewedComponent {
     });
     readonly currentPlaylist = this.xtreamStore.currentPlaylist;
 
-    constructor(
-        @Optional() public dialogRef?: MatDialogRef<RecentlyViewedComponent>
-    ) {
+    constructor() {
         this.xtreamStore.setSelectedContentType(undefined);
 
         if (this.isGlobal) {

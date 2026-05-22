@@ -1,15 +1,4 @@
-import {
-    Directive,
-    ElementRef,
-    Renderer2,
-    input,
-    output,
-    OnInit,
-    OnDestroy,
-    effect,
-    signal,
-    AfterViewInit,
-} from '@angular/core';
+import { Directive, ElementRef, Renderer2, input, output, OnInit, OnDestroy, effect, signal, AfterViewInit, inject } from '@angular/core';
 
 /**
  * ResizableDirective - Makes an element horizontally resizable by dragging its edge.
@@ -32,6 +21,9 @@ import {
     standalone: true,
 })
 export class ResizableDirective implements OnInit, AfterViewInit, OnDestroy {
+    private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly renderer = inject(Renderer2);
+
     /** Minimum width in pixels */
     readonly minWidth = input<number>(200);
 
@@ -68,10 +60,7 @@ export class ResizableDirective implements OnInit, AfterViewInit, OnDestroy {
     private boundTouchMove: ((e: TouchEvent) => void) | null = null;
     private boundTouchEnd: ((e: TouchEvent) => void) | null = null;
 
-    constructor(
-        private readonly el: ElementRef<HTMLElement>,
-        private readonly renderer: Renderer2
-    ) {
+    constructor() {
         // Apply resizing class when dragging
         effect(() => {
             if (this.isResizing()) {

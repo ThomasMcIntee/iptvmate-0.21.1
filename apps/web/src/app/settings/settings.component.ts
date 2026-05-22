@@ -1,14 +1,6 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 import { CommonModule } from '@angular/common';
-import {
-    Component,
-    inject,
-    Inject,
-    Input,
-    OnInit,
-    Optional,
-    signal,
-} from '@angular/core';
+import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import {
     FormArray,
     FormBuilder,
@@ -170,9 +162,11 @@ export class SettingsComponent implements OnInit {
 
     private settingsStore = inject(SettingsStore);
 
-    constructor(
-        @Optional() @Inject(MAT_DIALOG_DATA) data?: { isDialog: boolean }
-    ) {
+    constructor() {
+        const data = inject<{
+    isDialog: boolean;
+}>(MAT_DIALOG_DATA, { optional: true });
+
         this.isDialog = data?.isDialog ?? false;
     }
 
