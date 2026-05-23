@@ -26,16 +26,7 @@
     },
     "extraResources": ["dist/apps/electron-backend/workers"],
     "mac": {
-        "target": [
-            {
-                "target": "dmg",
-                "arch": ["x64", "arm64"]
-            },
-            {
-                "target": "zip",
-                "arch": ["x64", "arm64"]
-            }
-        ],
+        "target": ["dmg", "zip"],
         "category": "public.app-category.video",
         "identity": null,
         "type": "distribution",
