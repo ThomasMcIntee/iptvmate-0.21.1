@@ -1,17 +1,49 @@
 {
-    "name": "electron-backend",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "apps/electron-backend/src",
-    "projectType": "application",
-    "targets": {
-        "build-worker": {
-            "executor": "nx:run-commands",
-            "outputs": ["{workspaceRoot}/dist/apps/electron-backend/workers"],
-            "options": {
-                "command": "node apps/electron-backend/build-worker.js"
+   {
+  "name": "electron-backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/electron-backend/src",
+  "projectType": "application",
+  "targets": {
+    "build-worker": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/electron-backend/workers"],
+      "options": {
+        "command": "node apps/electron-backend/build-worker.js"
+      }
+    },
+    "build": {
+      "dependsOn": [
+        "electron-backend:build-worker",
+        {
+          "projects": ["web", "remote-control-web"],
+          "target": "build"
+        }
+      ],
+      "executor": "nx-electron:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/electron-backend",
+        "main": "apps/electron-backend/src/main.ts",
+        "tsConfig": "apps/electron-backend/tsconfig.app.json",
+        "assets": ["apps/electron-backend/src/assets"],
+        "buildLibsFromSource": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/electron-backend/src/environments/environment.ts",
+              "with": "apps/electron-backend/src/environments/environment.prod.ts"
             }
-        },
-        "build": {
+          ]
+        }
+      }
+    },
+          "build": {
             "dependsOn": [
                 "electron-backend:build-worker",
                 {
