@@ -70,15 +70,13 @@ jobs:
             - name: Build backend
               run: npm run build:backend
 
-                       - name: Make Electron app
+            - name: Make Electron app
               if: matrix.os != 'macos'
               run: npm run make:app
 
             - name: Make Electron app (macOS)
               if: matrix.os == 'macos'
               run: npm run make:app -- --platform=darwin --arch=${{ matrix.arch }}
-            - name: Make Electron app
-              run: npm run make:app
 
             - name: Upload artifacts (macOS)
               if: matrix.os == 'macos'
