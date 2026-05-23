@@ -70,17 +70,13 @@ jobs:
             - name: Build backend
               run: npm run build:backend
 
-            - name: Override macOS arch in electron-builder.json
-              if: matrix.os == 'macos'
-              run: |
-                  # Replace the mac arch array with just the target architecture
-                  node -e "
-                    const fs = require('fs');
-                    const pkg = JSON.parse(fs.readFileSync('electron-builder.json', 'utf8'));
-                    pkg.mac.target.arch = ['${{ matrix.arch }}'];
-                    fs.writeFileSync('electron-builder.json', JSON.stringify(pkg, null, 4));
-                  "
+                       - name: Make Electron app
+              if: matrix.os != 'macos'
+              run: npm run make:app
 
+            - name: Make Electron app (macOS)
+              if: matrix.os == 'macos'
+              run: npm run make:app -- --platform=darwin --arch=${{ matrix.arch }}
             - name: Make Electron app
               run: npm run make:app
 
