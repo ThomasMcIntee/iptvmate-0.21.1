@@ -38,7 +38,9 @@ export default class App {
         event: { preventDefault: () => void },
         url: string
     ) {
-        if (App.mainWindow && url !== App.mainWindow.webContents.getURL()) {
+        const mainWindow = App.mainWindow;
+
+        if (mainWindow && url !== mainWindow.webContents.getURL()) {
             // this is a normal external redirect, open it in a new browser window
             event.preventDefault();
             shell.openExternal(url);
@@ -84,8 +86,8 @@ export default class App {
         }
 
         const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
-        const width = Math.min(1280, workAreaSize.width || 1280);
-        const height = Math.min(720, workAreaSize.height || 720);
+        const defaultWidth = Math.min(1280, workAreaSize.width || 1280);
+        const defaultHeight = Math.min(720, workAreaSize.height || 720);
 
         const savedWindowBounds = store.get(WINDOW_BOUNDS);
 
@@ -100,9 +102,9 @@ export default class App {
             },
             minHeight: 600,
             minWidth: 900,
-            ...savedWindowBounds,
-            width,
-            height,
+            width: savedWindowBounds?.width ?? defaultWidth,
+            height: savedWindowBounds?.height ?? defaultHeight,
+            ...(savedWindowBounds ?? {}),
             ...(process.platform === 'darwin'
                 ? {
                       titleBarStyle: 'hidden',
