@@ -76,7 +76,7 @@ jobs:
 
             - name: Make Electron app (macOS)
               if: matrix.os == 'macos'
-              run: npm run make:app -- --platform=darwin --arch=${{ matrix.arch }}
+              run: npm run make:app -- --platform=mac --arch=${{ matrix.arch }}
 
             - name: Upload artifacts (macOS)
               if: matrix.os == 'macos'
