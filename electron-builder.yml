@@ -1,0 +1,12 @@
+appId: com.iptvmate.app
+productName: IPTVMate
+
+directories:
+  output: dist/executables
+
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+    - tar.gz
