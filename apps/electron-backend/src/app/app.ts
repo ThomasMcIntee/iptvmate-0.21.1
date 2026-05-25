@@ -95,6 +95,7 @@ export default class App {
         App.mainWindow = new BrowserWindow({
             title: 'iptvmate',
             show: false,
+            ...(savedWindowBounds ?? {}),
             webPreferences: {
                 contextIsolation: true,
                 backgroundThrottling: false,
@@ -104,7 +105,6 @@ export default class App {
             minWidth: 900,
             width: savedWindowBounds?.width ?? defaultWidth,
             height: savedWindowBounds?.height ?? defaultHeight,
-            ...(savedWindowBounds ?? {}),
             ...(process.platform === 'darwin'
                 ? {
                       titleBarStyle: 'hidden',
