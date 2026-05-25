@@ -68,10 +68,6 @@
             {
                 "target": "pacman",
                 "arch": ["x64"]
-            },
-            {
-                "target": "flatpak",
-                "arch": ["x64"]
             }
         ],
         "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
