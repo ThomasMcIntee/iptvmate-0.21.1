@@ -90,11 +90,13 @@ export default class App {
         const defaultHeight = Math.min(720, workAreaSize.height || 720);
 
         const savedWindowBounds = store.get(WINDOW_BOUNDS);
+        const { width, height, ...restSavedWindowBounds } = savedWindowBounds ?? {};
 
         // Create the browser window.
         App.mainWindow = new BrowserWindow({
             title: 'iptvmate',
             show: false,
+            ...restSavedWindowBounds,
             webPreferences: {
                 contextIsolation: true,
                 backgroundThrottling: false,
@@ -102,9 +104,8 @@ export default class App {
             },
             minHeight: 600,
             minWidth: 900,
-            width: savedWindowBounds?.width ?? defaultWidth,
-            height: savedWindowBounds?.height ?? defaultHeight,
-            ...(savedWindowBounds ?? {}),
+            width: width ?? defaultWidth,
+            height: height ?? defaultHeight,
             ...(process.platform === 'darwin'
                 ? {
                       titleBarStyle: 'hidden',
