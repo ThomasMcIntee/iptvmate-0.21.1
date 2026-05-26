@@ -41,6 +41,7 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
             setUserAgent?: (userAgent: string, referrer?: string) => void;
             toggleFullScreen?: () => Promise<boolean>;
             isFullScreen?: () => Promise<boolean>;
+            getStreamProxyPort?: () => Promise<number>;
         };
     }).electron;
 
@@ -61,8 +62,15 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
     private currentSourceUrl: string | null = null;
     /** Tracks which transcode retry stage we're at for the current channel. */
     private transcodeAttempt: 'none' | 'audio' | 'full' = 'none';
-    /** Whether the underlying <video> is currently muted (drives the unmute overlay). */
-    isMuted = true;
+    /** Per-source guard so silence detection only retries once per stream. */
+    private silenceCheckAttemptedFor: string | null = null;
+    private audioContext: AudioContext | null = null;
+    private audioAnalyser: AnalyserNode | null = null;
+    private audioMediaSource: MediaElementAudioSourceNode | null = null;
+    private silenceCheckTimer: ReturnType<typeof setTimeout> | null = null;
+    private silenceSamples: number[] = [];
+    /** Whether the underlying <video> is currently muted. */
+    isMuted = false;
     /** Whether the player-host wrapper is currently in fullscreen. */
     isFullscreen = false;
     /** Whether the user has been recently active (drives controls visibility). */
@@ -71,31 +79,57 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
     /** Toggle fullscreen on the .player-host wrapper (so overlays remain visible). */
     toggleFullscreen(): void {
-        // In Electron, prefer toggling the BrowserWindow fullscreen (more reliable
-        // than HTML5 element fullscreen, which can be quirky inside Electron).
-        if (this.electronApi?.toggleFullScreen) {
-            this.electronApi.toggleFullScreen()
-                .then((next) => {
-                    this.isFullscreen = next;
-                })
-                .catch(() => undefined);
-            return;
-        }
+        // Prefer HTML element fullscreen so the player host fills the screen even
+        // when rendered inside a constrained ancestor (e.g. MatDialog at 80%
+        // width). Toggling only the Electron BrowserWindow leaves the dialog at
+        // its constrained size, so the movie does not actually fill the screen.
         const host = this.videoPlayer?.nativeElement?.parentElement as
             | (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> })
             | null;
-        if (!host) return;
         const doc = document as Document & {
             webkitFullscreenElement?: Element;
             webkitExitFullscreen?: () => Promise<void>;
         };
         const inFs = !!(doc.fullscreenElement ?? doc.webkitFullscreenElement);
+
+        const fallbackToWindow = () => {
+            if (!this.electronApi?.toggleFullScreen) return;
+            this.electronApi
+                .toggleFullScreen()
+                .then((next) => {
+                    this.isFullscreen = next;
+                })
+                .catch(() => undefined);
+        };
+
         if (inFs) {
-            const exit = doc.exitFullscreen?.bind(doc) ?? doc.webkitExitFullscreen?.bind(doc);
-            exit?.()?.catch(() => undefined);
-        } else {
-            const req = host.requestFullscreen?.bind(host) ?? host.webkitRequestFullscreen?.bind(host);
-            req?.()?.catch(() => undefined);
+            const exit =
+                doc.exitFullscreen?.bind(doc) ??
+                doc.webkitExitFullscreen?.bind(doc);
+            const result = exit?.();
+            if (result && typeof (result as Promise<void>).catch === 'function') {
+                (result as Promise<void>).catch(() => fallbackToWindow());
+            } else if (!exit) {
+                fallbackToWindow();
+            }
+            return;
+        }
+
+        if (!host) {
+            fallbackToWindow();
+            return;
+        }
+
+        const req =
+            host.requestFullscreen?.bind(host) ??
+            host.webkitRequestFullscreen?.bind(host);
+        if (!req) {
+            fallbackToWindow();
+            return;
+        }
+        const result = req();
+        if (result && typeof (result as Promise<void>).catch === 'function') {
+            (result as Promise<void>).catch(() => fallbackToWindow());
         }
     }
 
@@ -220,6 +254,8 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
         this.hlsRecoveryAttempted = false;
         this.transcodeAttempt = 'none';
         this.currentSourceUrl = null;
+        this.silenceCheckAttemptedFor = null;
+        this.stopSilenceCheck();
         this.resetVideoElement();
 
         if (channel.url) {
@@ -341,6 +377,11 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
      */
     handlePlayOperation(): void {
         const video = this.videoPlayer.nativeElement;
+        // Always start unmuted at full volume.
+        video.muted = false;
+        if (video.volume === 0) {
+            video.volume = 1;
+        }
         const playPromise = video.play();
 
         if (playPromise !== undefined) {
@@ -352,22 +393,12 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
                     } else {
                         this.enableCaptions();
                     }
+                    this.startSilenceCheck();
                 })
                 .catch(() => {
-                    // Browser blocked autoplay (common in PWA without prior
-                    // user interaction). Retry muted, which is universally
-                    // allowed. User can unmute via the controls.
-                    try {
-                        video.muted = true;
-                        const mutedPromise = video.play();
-                        if (mutedPromise !== undefined) {
-                            mutedPromise.catch(() => {
-                                // Still blocked — leave for user to press play
-                            });
-                        }
-                    } catch {
-                        // Ignore — user can press play manually
-                    }
+                    // Autoplay was blocked (rare in Electron when
+                    // `autoplayPolicy: 'no-user-gesture-required'` is set).
+                    // Leave the video unmuted and let the user press play.
                 });
         }
     }
@@ -583,6 +614,157 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
+     * Audio silence detection. Some streams (e.g. AC-3 / E-AC-3 / DTS in
+     * MP4/MKV) have a video codec Chromium can decode but an audio codec it
+     * cannot, resulting in silent playback with no error. After ~4s of strictly
+     * silent samples we retry the current source through the local stream
+     * proxy with `transcode=audio` (preserves video codec, transcodes audio
+     * to AAC). Guarded per-source so it won't loop.
+     */
+    private startSilenceCheck(): void {
+        const video = this.videoPlayer?.nativeElement;
+        if (!video) return;
+        const sourceUrl = this.currentSourceUrl;
+        if (!sourceUrl) return;
+        // Already retried (or actively checking) this source — bail.
+        if (this.silenceCheckAttemptedFor === sourceUrl) return;
+        // Already routing through an audio-only transcode — no further recovery.
+        if (
+            sourceUrl.includes('transcode=audio') ||
+            sourceUrl.includes('transcode=1')
+        ) {
+            return;
+        }
+        // Only available in Electron where the proxy can do the transcoding.
+        if (!this.electronApi?.getStreamProxyPort) return;
+
+        // Tear down any previous Web Audio graph before creating a new one.
+        this.stopSilenceCheck();
+        this.silenceCheckAttemptedFor = sourceUrl;
+
+        try {
+            const Ctor =
+                (window as unknown as { AudioContext?: typeof AudioContext })
+                    .AudioContext ??
+                (window as unknown as { webkitAudioContext?: typeof AudioContext })
+                    .webkitAudioContext;
+            if (!Ctor) return;
+
+            const ctx = new Ctor();
+            const src = ctx.createMediaElementSource(video);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            src.connect(analyser);
+            // Keep audio routed to speakers (MediaElementSource hijacks output otherwise).
+            analyser.connect(ctx.destination);
+
+            this.audioContext = ctx;
+            this.audioMediaSource = src;
+            this.audioAnalyser = analyser;
+            this.silenceSamples = [];
+
+            const buffer = new Uint8Array(analyser.frequencyBinCount);
+            const sample = () => {
+                if (!this.audioAnalyser) return;
+                this.audioAnalyser.getByteTimeDomainData(buffer);
+                let peak = 0;
+                for (let i = 0; i < buffer.length; i++) {
+                    const delta = Math.abs(buffer[i] - 128);
+                    if (delta > peak) peak = delta;
+                }
+                this.silenceSamples.push(peak);
+
+                // Sample for ~4s at 250ms intervals.
+                if (this.silenceSamples.length >= 16) {
+                    const maxPeak = Math.max(...this.silenceSamples);
+                    this.stopSilenceCheck();
+                    if (maxPeak === 0) {
+                        console.warn(
+                            '[HtmlVideoPlayer] No audio detected for 4s — retrying with audio-only transcode'
+                        );
+                        void this.retryWithAudioTranscode(sourceUrl);
+                    }
+                    return;
+                }
+                this.silenceCheckTimer = setTimeout(sample, 250);
+            };
+            // Skip the first ~750ms so the decoder can start producing samples.
+            this.silenceCheckTimer = setTimeout(sample, 750);
+        } catch (e) {
+            console.debug(
+                '[HtmlVideoPlayer] Web Audio silence check unavailable:',
+                e instanceof Error ? e.message : String(e)
+            );
+            this.stopSilenceCheck();
+        }
+    }
+
+    private stopSilenceCheck(): void {
+        if (this.silenceCheckTimer) {
+            clearTimeout(this.silenceCheckTimer);
+            this.silenceCheckTimer = null;
+        }
+        this.silenceSamples = [];
+        // NOTE: Do NOT disconnect MediaElementSource here — doing so silences
+        // the <video>. We only release the graph on destroy.
+    }
+
+    private teardownAudioGraph(): void {
+        this.stopSilenceCheck();
+        try {
+            this.audioMediaSource?.disconnect();
+        } catch {
+            // ignore
+        }
+        try {
+            this.audioAnalyser?.disconnect();
+        } catch {
+            // ignore
+        }
+        if (this.audioContext) {
+            void this.audioContext.close().catch(() => undefined);
+        }
+        this.audioMediaSource = null;
+        this.audioAnalyser = null;
+        this.audioContext = null;
+    }
+
+    private async retryWithAudioTranscode(sourceUrl: string): Promise<void> {
+        try {
+            const port = await this.electronApi?.getStreamProxyPort?.();
+            if (!port) return;
+            // If sourceUrl is already proxied, unwrap to the inner target first.
+            let target = sourceUrl;
+            try {
+                const parsed = new URL(sourceUrl);
+                const nested = parsed.searchParams.get('url');
+                if (nested && parsed.pathname.endsWith('/stream')) {
+                    target = nested;
+                }
+            } catch {
+                // not a URL we can parse — use as-is
+            }
+            const proxyUrl =
+                `http://127.0.0.1:${port}/stream?url=${encodeURIComponent(target)}&transcode=audio`;
+            this.transcodeAttempt = 'audio';
+            this.errorMessage = null;
+            this.errorHint = null;
+            if (this.hls) {
+                this.hls.destroy();
+                this.hls = null;
+            }
+            this.resetVideoElement();
+            this.currentSourceUrl = proxyUrl;
+            this.playNative(proxyUrl, 'video/mp2t');
+        } catch (e) {
+            console.warn(
+                '[HtmlVideoPlayer] Failed to retry with audio transcode:',
+                e instanceof Error ? e.message : String(e)
+            );
+        }
+    }
+
+    /**
      * Destroy hls instance on component destroy and clean up event listener
      */
     ngOnDestroy(): void {
@@ -594,6 +776,7 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
             clearTimeout(this.activityTimer);
             this.activityTimer = null;
         }
+        this.teardownAudioGraph();
         if (this.hls) {
             this.hls.destroy();
         }

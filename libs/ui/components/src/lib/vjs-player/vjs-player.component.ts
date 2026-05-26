@@ -68,6 +68,14 @@ export class VjsPlayerComponent
     private playbackErrors: PlaybackError[] = [];
     private currentSourceUrl: string | null = null;
     private noVideoFallbackAttemptedFor: string | null = null;
+    /** Per-source guard so audio-silence detection only retries once per stream. */
+    private silenceCheckAttemptedFor: string | null = null;
+    /** Web Audio plumbing for silence detection. */
+    private audioContext: AudioContext | null = null;
+    private audioAnalyser: AnalyserNode | null = null;
+    private audioMediaSource: MediaElementAudioSourceNode | null = null;
+    private silenceCheckTimer: ReturnType<typeof setTimeout> | null = null;
+    private silenceSamples: number[] = [];
 
     /**
      * Detects if a source URL is from a remote IPTV provider (Xtream, Stalker, etc.)
@@ -224,6 +232,7 @@ export class VjsPlayerComponent
             () => {
                 try {
                     this.player.volume(this.volume);
+                    this.player.muted(false);
                 } catch (e) {
                     console.warn('Failed to set initial VideoJS volume:', e);
                 }
@@ -249,6 +258,14 @@ export class VjsPlayerComponent
                         duration,
                     });
                 });
+
+                // Audio silence detection: some streams (e.g. AC-3 / E-AC-3 / DTS)
+                // have a video codec Chromium can decode but an audio codec it cannot,
+                // resulting in silent playback with no error. Detect this and retry
+                // through the proxy with audio-only transcoding.
+                this.player.on('playing', () => this.startSilenceCheck());
+                this.player.on('pause', () => this.stopSilenceCheck());
+                this.player.on('ended', () => this.stopSilenceCheck());
 
                 const trackList = this.player.textTracks();
                 trackList.on('addtrack', () => this.applyTextTrackSettings());
@@ -400,6 +417,9 @@ export class VjsPlayerComponent
         }
         this.lastAppliedSourcesKey = nextSourcesKey;
         this.noVideoFallbackAttemptedFor = null;
+        // Reset silence-detection state for each new source.
+        this.silenceCheckAttemptedFor = null;
+        this.stopSilenceCheck();
 
         console.log(
             'Setting player source:',
@@ -777,6 +797,151 @@ export class VjsPlayerComponent
 
 
     /**
+     * Begin sampling audio levels from the underlying <video> element. After ~4s
+     * of strictly silent samples, retry the current source through the proxy
+     * with `transcode=audio` (preserves video codec, transcodes audio to AAC).
+     * No-ops if Web Audio is unavailable, the source already uses an audio
+     * transcode, or we've already retried this source.
+     */
+    private startSilenceCheck(): void {
+        if (this.isDestroyed || !this.player) return;
+        const sourceUrl = this.currentSourceUrl;
+        if (!sourceUrl) return;
+        // Already retried (or actively checking) this source — bail.
+        if (this.silenceCheckAttemptedFor === sourceUrl) return;
+        // Source is already an audio-transcode or full-transcode proxy URL — no recovery possible.
+        if (sourceUrl.includes('transcode=audio') || sourceUrl.includes('transcode=1')) {
+            return;
+        }
+        // Only worth checking for proxied sources (CORS-safe + retry path exists).
+        if (!sourceUrl.includes('/stream?url=')) {
+            return;
+        }
+
+        const videoEl = this.player
+            .el()
+            ?.querySelector?.('video') as HTMLVideoElement | null;
+        if (!videoEl) return;
+
+        // Tear down any previous Web Audio graph before creating a new one.
+        this.stopSilenceCheck();
+        this.silenceCheckAttemptedFor = sourceUrl;
+
+        try {
+            const Ctor =
+                (window as unknown as { AudioContext?: typeof AudioContext })
+                    .AudioContext ??
+                (window as unknown as { webkitAudioContext?: typeof AudioContext })
+                    .webkitAudioContext;
+            if (!Ctor) return;
+
+            const ctx = new Ctor();
+            const src = ctx.createMediaElementSource(videoEl);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            src.connect(analyser);
+            // Keep audio routed to speakers (MediaElementSource hijacks output otherwise).
+            analyser.connect(ctx.destination);
+
+            this.audioContext = ctx;
+            this.audioMediaSource = src;
+            this.audioAnalyser = analyser;
+            this.silenceSamples = [];
+
+            const buffer = new Uint8Array(analyser.frequencyBinCount);
+            const sample = () => {
+                if (!this.audioAnalyser) return;
+                this.audioAnalyser.getByteTimeDomainData(buffer);
+                let peak = 0;
+                for (let i = 0; i < buffer.length; i++) {
+                    // 128 is silence (centered). Distance from center indicates amplitude.
+                    const delta = Math.abs(buffer[i] - 128);
+                    if (delta > peak) peak = delta;
+                }
+                this.silenceSamples.push(peak);
+
+                // Sample for ~4s at 250ms intervals (16 samples).
+                if (this.silenceSamples.length >= 16) {
+                    const maxPeak = Math.max(...this.silenceSamples);
+                    this.stopSilenceCheck();
+                    if (maxPeak === 0) {
+                        console.warn(
+                            '[VjsPlayer] No audio detected for 4s — retrying with audio-only transcode'
+                        );
+                        void this.retryWithAudioTranscode(sourceUrl);
+                    }
+                    return;
+                }
+                this.silenceCheckTimer = setTimeout(sample, 250);
+            };
+            // Skip the first ~750ms to allow the decoder to start producing samples.
+            this.silenceCheckTimer = setTimeout(sample, 750);
+        } catch (e) {
+            console.debug(
+                '[VjsPlayer] Web Audio silence check unavailable:',
+                e instanceof Error ? e.message : String(e)
+            );
+            this.stopSilenceCheck();
+        }
+    }
+
+    private stopSilenceCheck(): void {
+        if (this.silenceCheckTimer) {
+            clearTimeout(this.silenceCheckTimer);
+            this.silenceCheckTimer = null;
+        }
+        this.silenceSamples = [];
+        // NOTE: We intentionally do NOT disconnect/close the AudioContext or
+        // MediaElementAudioSourceNode here. Once a <video> has been bound to a
+        // MediaElementSource, the only way to keep audio playing is to leave
+        // the graph connected. We only release it on destroy.
+    }
+
+    private teardownAudioGraph(): void {
+        this.stopSilenceCheck();
+        try {
+            this.audioMediaSource?.disconnect();
+        } catch {
+            // ignore
+        }
+        try {
+            this.audioAnalyser?.disconnect();
+        } catch {
+            // ignore
+        }
+        if (this.audioContext) {
+            void this.audioContext.close().catch(() => undefined);
+        }
+        this.audioMediaSource = null;
+        this.audioAnalyser = null;
+        this.audioContext = null;
+    }
+
+    private async retryWithAudioTranscode(sourceUrl: string): Promise<void> {
+        try {
+            const u = new URL(sourceUrl);
+            const target = u.searchParams.get('url');
+            if (!target) return;
+            const transcodedUrl = await this.buildProxyUrl(target, undefined, {
+                forceTranscode: true,
+            });
+            // Replace with audio-only flavor by swapping the transcode param.
+            if (!transcodedUrl) return;
+            const finalUrl = transcodedUrl.replace('transcode=1', 'transcode=audio');
+            this.setPlayerSource(
+                { src: finalUrl, type: 'video/mp2t' },
+                true,
+                false
+            );
+        } catch (e) {
+            console.warn(
+                '[VjsPlayer] Failed to retry with audio transcode:',
+                e instanceof Error ? e.message : String(e)
+            );
+        }
+    }
+
+    /**
      * Removes the players HTML reference on destroy
      */
     ngOnDestroy(): void {
@@ -786,6 +951,7 @@ export class VjsPlayerComponent
         }
 
         this.isDestroyed = true;
+        this.teardownAudioGraph();
         if (this.player) {
             this.player.dispose();
         }

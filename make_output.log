@@ -22,7 +22,7 @@
 
 [2m> [22m[2mnx run[22m electron-backend:build
 
-[1m[93melectron-backend:[39m[22m asset main.js 262 KiB [emitted] [big] (name: main) 1 related asset
+[1m[93melectron-backend:[39m[22m asset main.js 262 KiB [compared for emit] [big] (name: main) 1 related asset
 [1m[93melectron-backend:[39m[22m asset main.preload.js 12.3 KiB [compared for emit] (name: main.preload) 1 related asset
 [1m[93melectron-backend:[39m[22m asset assets/gitkeep_tmpl_ 13 bytes [compared for emit] [from: apps/electron-backend/src/assets/gitkeep_tmpl_] [copied]
 [1m[93melectron-backend:[39m[22m cacheable modules 256 KiB
@@ -36,7 +36,7 @@
 [1m[93melectron-backend:[39m[22m   external "drizzle-orm/sqlite-core" 42 bytes [built] [code generated]
 [1m[93melectron-backend:[39m[22m   external "drizzle-orm/better-sqlite3" 42 bytes [built] [code generated]
 [1m[93melectron-backend:[39m[22m + 23 modules
-[1m[93melectron-backend:[39m[22m webpack 5.104.1 compiled successfully in 10151 ms
+[1m[93melectron-backend:[39m[22m webpack 5.104.1 compiled successfully in 8949 ms
 
 [2m> [22m[2mnx run[22m electron-backend:make
 
@@ -51,26 +51,38 @@ electron-backend: *********************************************************
 [1m[93melectron-backend:[39m[22m executing @electron/rebuild  [34melectronVersion[39m=35.7.5 [34march[39m=x64 [34mbuildFromSource[39m=false [34mappDir[39m=./
 [1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
 [1m[93melectron-backend:[39m[22m installing native dependencies  [34march[39m=x64
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m preparing       [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m finished        [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m preparing       [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m finished        [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
 [1m[93melectron-backend:[39m[22m   [34mΓÇó[39m completed installing native dependencies
 [1m[93melectron-backend:[39m[22m   [34mΓÇó[39m packaging       [34mplatform[39m=win32 [34march[39m=x64 [34melectron[39m=35.7.5 [34mappOutDir[39m=dist\executables\win-unpacked
-electron-backend: (node:5264) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
-electron-backend: (Use `node --trace-deprecation ...` to show where the warning was created)
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
-[1m[93melectron-backend:[39m[22m updating asar integrity executable resource  [34mexecutablePath[39m=dist\executables\win-unpacked\iptvmate.exe
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\win-unpacked\iptvmate.exe
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\win-unpacked\resources\app.asar.unpacked\node_modules\@ffmpeg-installer\win32-x64\ffmpeg.exe
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m building        [34mtarget[39m=nsis [34mfile[39m=dist\executables\iptvmate-0.23.2-windows-x64-setup.exe [34marchs[39m=x64 [34moneClick[39m=true [34mperMachine[39m=false
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\win-unpacked\resources\elevate.exe
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\__uninstaller-nsis-iptvmate.exe
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\iptvmate-0.23.2-windows-x64-setup.exe
-[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
-[1m[93melectron-backend:[39m[22m building block map  [34mblockMapFile[39m=dist\executables\iptvmate-0.23.2-windows-x64-setup.exe.blockmap
+[1m[93melectron-backend:[39m[22m [31m  Γ¿» [0m[31mremove C:\prgtm\iptvmate\iptvmate-0.21.1\dist\executables\win-unpacked\resources\app.asar: The process cannot access the file because it is being used by another process.
+[1m[93melectron-backend:[39m[22m github.com/develar/go-fs-util.EnsureEmptyDir
+[1m[93melectron-backend:[39m[22m 	/Users/runner/go/pkg/mod/github.com/develar/go-fs-util@v0.0.0-20190620175131-69a2d4542206/fs.go:98
+[1m[93melectron-backend:[39m[22m github.com/develar/app-builder/pkg/electron.UnpackElectron.func1.1
+[1m[93melectron-backend:[39m[22m 	/Users/runner/work/app-builder/app-builder/pkg/electron/electronUnpack.go:38
+[1m[93melectron-backend:[39m[22m github.com/develar/app-builder/pkg/util.MapAsyncConcurrency.func2
+[1m[93melectron-backend:[39m[22m 	/Users/runner/work/app-builder/app-builder/pkg/util/async.go:68
+[1m[93melectron-backend:[39m[22m runtime.goexit
+[1m[93melectron-backend:[39m[22m 	/Users/runner/hostedtoolcache/go/1.21.13/arm64/src/runtime/asm_amd64.s:1650[0m  
+electron-backend: Error: C:\prgtm\iptvmate\iptvmate-0.21.1\node_modules\.pnpm\app-builder-bin@5.0.0-alpha.12\node_modules\app-builder-bin\win\x64\app-builder.exe process failed ERR_ELECTRON_BUILDER_CANNOT_EXECUTE
+electron-backend: Exit code:
+electron-backend: 1
+electron-backend:     at ChildProcess.<anonymous> (C:\prgtm\iptvmate\iptvmate-0.21.1\node_modules\.pnpm\builder-util@26.0.11\node_modules\builder-util\src\util.ts:259:14)
+electron-backend:     at Object.onceWrapper (node:events:631:12)
+electron-backend:     at ChildProcess.emit (node:events:509:20)
+electron-backend:     at ChildProcess.cp.emit (C:\prgtm\iptvmate\iptvmate-0.21.1\node_modules\.pnpm\cross-spawn@7.0.6\node_modules\cross-spawn\lib\enoent.js:34:29)
+electron-backend:     at maybeClose (node:internal/child_process:1108:16)
+electron-backend:     at Process.ChildProcess._handle.onexit (node:internal/child_process:305:5)
 
-[2m[32m[39m[22m
+[2m[31m[39m[22m
 
-[7m[1m[32m NX [39m[22m[27m  [32mSuccessfully ran target [1mmake[22m for project electron-backend and [1m6[22m tasks it depends on[39m
+ NX   Running target make for project electron-backend and 6 tasks it depends on failed
 
-[2mNx read the output from the cache instead of running the command for 4 out of 7 tasks.[22m
+Failed tasks:
+
+- electron-backend:make
+
+Hint: run the command with --verbose for more details.
 

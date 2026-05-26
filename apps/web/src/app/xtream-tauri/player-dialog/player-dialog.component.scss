@@ -3,6 +3,7 @@
 .content {
     overflow: hidden;
     padding: 10px !important;
+    height: 500px;
 }
 
 .align-actions {
@@ -12,5 +13,52 @@
 mat-dialog-content {
     .video-js {
         height: 500px !important;
+    }
+
+    app-html-video-player,
+    app-web-player-view {
+        display: block;
+        height: 100%;
+    }
+}
+
+h2[mat-dialog-title] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.dialog-fs-btn {
+    margin-left: auto;
+}
+
+// When the dialog is in fullscreen mode, make it cover the viewport and
+// give the video as much space as possible.
+.player-dialog-fullscreen {
+    .mat-mdc-dialog-surface,
+    .mdc-dialog__surface {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+
+    mat-dialog-content,
+    .mat-mdc-dialog-content {
+        max-height: none !important;
+        height: calc(100vh - 110px);
+        padding: 0 !important;
+    }
+
+    .video-js,
+    video {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    mat-dialog-content .video-js {
+        height: 100% !important;
     }
 }

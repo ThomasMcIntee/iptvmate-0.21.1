@@ -100,6 +100,7 @@ export default class App {
             webPreferences: {
                 contextIsolation: true,
                 backgroundThrottling: false,
+                autoplayPolicy: 'no-user-gesture-required',
                 preload: join(__dirname, 'main.preload.js'),
             },
             minHeight: 600,

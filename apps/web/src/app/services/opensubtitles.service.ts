@@ -169,6 +169,24 @@ export class OpenSubtitlesService {
                     );
 
                     if (download?.link) {
+                        // Try to fetch the actual VTT text and return as a
+                        // blob URL (same-origin to the renderer). Falls back
+                        // to the raw link if CORS blocks the fetch.
+                        try {
+                            const text = await firstValueFrom(
+                                this.http.get(download.link, {
+                                    responseType: 'text',
+                                })
+                            );
+                            if (text) {
+                                const blob = new Blob([text], {
+                                    type: 'text/vtt',
+                                });
+                                return URL.createObjectURL(blob);
+                            }
+                        } catch {
+                            // CORS or network — fall through to raw link.
+                        }
                         return download.link;
                     }
                 }

@@ -97,11 +97,14 @@ function rewriteM3u8(
 let proxyPort: number | null = null;
 let proxyServer: http.Server | null = null;
 
+type TranscodeMode = 'full' | 'audio';
+
 function maybeTranscodeResponse(
     req: IncomingMessage,
     res: ServerResponse,
     proxyRes: IncomingMessage,
-    sourceUrl: string
+    sourceUrl: string,
+    mode: TranscodeMode = 'full'
 ): boolean {
     if (!HAS_WORKING_FFMPEG || !FFMPEG_BIN) {
         if (!ffmpegUnavailableLogged) {
@@ -119,7 +122,7 @@ function maybeTranscodeResponse(
     }
 
     console.log(
-        `[StreamProxy] transcoding to H.264/AAC via ${FFMPEG_SOURCE}: ${sourceUrl}`
+        `[StreamProxy] transcoding (${mode}) via ${FFMPEG_SOURCE}: ${sourceUrl}`
     );
 
     const responseHeaders: http.OutgoingHttpHeaders = {
@@ -132,6 +135,22 @@ function maybeTranscodeResponse(
     };
 
     res.writeHead(200, responseHeaders);
+
+    const videoArgs =
+        mode === 'audio'
+            ? ['-c:v', 'copy']
+            : [
+                  '-c:v',
+                  'libx264',
+                  '-preset',
+                  'veryfast',
+                  '-profile:v',
+                  'main',
+                  '-level:v',
+                  '4.1',
+                  '-pix_fmt',
+                  'yuv420p',
+              ];
 
     const ffmpeg = spawn(
         FFMPEG_BIN,
@@ -151,16 +170,7 @@ function maybeTranscodeResponse(
             '0:a:0?',
             '-sn',
             '-dn',
-            '-c:v',
-            'libx264',
-            '-preset',
-            'veryfast',
-            '-profile:v',
-            'main',
-            '-level:v',
-            '4.1',
-            '-pix_fmt',
-            'yuv420p',
+            ...videoArgs,
             '-c:a',
             'aac',
             '-b:a',
@@ -262,7 +272,9 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
 
     const params = new URLSearchParams(reqUrl.slice(searchStart + 1));
     const targetUrl = params.get('url');
-    const shouldTranscode = params.get('transcode') === '1';
+    const transcodeParam = params.get('transcode');
+    const shouldTranscode = transcodeParam === '1' || transcodeParam === 'audio';
+    const transcodeMode: TranscodeMode = transcodeParam === 'audio' ? 'audio' : 'full';
     const shouldTranscodeRequest = shouldTranscode && req.method === 'GET';
 
     if (!targetUrl) {
@@ -272,7 +284,7 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
     }
 
     console.log(
-        `[StreamProxy] ${req.method ?? 'GET'} -> ${targetUrl} (transcode=${shouldTranscode ? '1' : '0'})`
+        `[StreamProxy] ${req.method ?? 'GET'} -> ${targetUrl} (transcode=${shouldTranscode ? transcodeMode : '0'})`
     );
 
     let target: URL;
@@ -360,7 +372,8 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
                     req,
                     res,
                     proxyRes,
-                    currentTarget.toString()
+                    currentTarget.toString(),
+                    transcodeMode
                 );
                 if (didStartTranscoding) {
                     return;

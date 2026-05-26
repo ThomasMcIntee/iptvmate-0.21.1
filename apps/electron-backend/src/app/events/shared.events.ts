@@ -147,6 +147,25 @@ ipcMain.handle(
                     link?: string;
                 };
                 if (downloadData?.link) {
+                    // Fetch the actual VTT text so the renderer can use a
+                    // same-origin data URL on the <track> element (avoids
+                    // CORS blocking on cross-origin subtitle CDNs).
+                    try {
+                        const vttRes = await fetch(downloadData.link, {
+                            method: 'GET',
+                            headers: { 'User-Agent': 'iptvmate v1' },
+                            signal: controller.signal,
+                        });
+                        if (vttRes.ok) {
+                            const text = await vttRes.text();
+                            const base64 = Buffer.from(text, 'utf-8').toString(
+                                'base64'
+                            );
+                            return `data:text/vtt;charset=utf-8;base64,${base64}`;
+                        }
+                    } catch {
+                        // Fall back to returning the raw link below.
+                    }
                     return downloadData.link;
                 }
             } catch {

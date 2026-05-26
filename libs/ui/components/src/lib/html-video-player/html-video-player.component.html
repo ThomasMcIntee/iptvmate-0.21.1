@@ -1,14 +1,5 @@
 <div class="player-host" #playerHost (mousemove)="notifyActivity()" (mouseenter)="notifyActivity()" (mouseleave)="setInactive()" (touchstart)="notifyActivity()">
-    <video #videoPlayer id="video-player" autoplay="true" controls="true" controlsList="nofullscreen" disablePictureInPicture muted></video>
-    @if (isMuted && !errorMessage) {
-        <button type="button" class="player-unmute" (click)="unmute()" aria-label="Unmute">
-            <span class="player-unmute__icon" aria-hidden="true">🔇</span>
-            <span class="player-unmute__label">Tap to unmute</span>
-        </button>
-    }
-    <button type="button" class="player-fs" [class.is-hidden]="!isActive" aria-label="Toggle fullscreen" [title]="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'" (click)="toggleFullscreen()">
-        <span class="material-icons player-fs__icon" aria-hidden="true">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
-    </button>
+    <video #videoPlayer id="video-player" autoplay="true" controls="true" disablePictureInPicture></video>
     @if (errorMessage) {
         <div class="player-error" role="alert">
             <div class="player-error__title">Playback error</div>
