@@ -1,12 +1,4 @@
-appId: com.iptvmate.app
-productName: IPTVMate
+extends: ./electron-builder.json
 
 directories:
   output: dist/executables
-
-linux:
-  target:
-    - AppImage
-    - deb
-    - rpm
-    - tar.gz
