@@ -1,0 +1,76 @@
+
+[7m[1m[36m NX [39m[22m[27m  [36mRunning target [1mmake[22m for project electron-backend and [1m6[22m tasks it depends on:[39m
+
+[2m[36m[39m[22m
+
+[2m> [22m[2mnx run[22m shared-interfaces:build  [2m[existing outputs match the cache, left as is][22m
+
+
+[2m> [22m[2mnx run[22m remote-control-web:build:production  [2m[existing outputs match the cache, left as is][22m
+
+
+[2m> [22m[2mnx run[22m m3u-utils:build  [2m[existing outputs match the cache, left as is][22m
+
+
+[2m> [22m[2mnx run[22m web:build:production  [2m[existing outputs match the cache, left as is][22m
+
+
+[2m> [22m[2mnx run[22m electron-backend:build-worker
+
+[1m[93melectron-backend:[39m[22m Building EPG parser worker with esbuild (development)...
+[1m[93melectron-backend:[39m[22m Γ£à Worker built successfully!
+
+[2m> [22m[2mnx run[22m electron-backend:build
+
+[1m[93melectron-backend:[39m[22m asset main.js 262 KiB [emitted] [big] (name: main) 1 related asset
+[1m[93melectron-backend:[39m[22m asset main.preload.js 12.3 KiB [compared for emit] (name: main.preload) 1 related asset
+[1m[93melectron-backend:[39m[22m asset assets/gitkeep_tmpl_ 13 bytes [compared for emit] [from: apps/electron-backend/src/assets/gitkeep_tmpl_] [copied]
+[1m[93melectron-backend:[39m[22m cacheable modules 256 KiB
+[1m[93melectron-backend:[39m[22m   modules by path ./libs/shared/ 46.4 KiB
+[1m[93melectron-backend:[39m[22m     modules by path ./libs/shared/interfaces/src/lib/*.ts 17.7 KiB 33 modules
+[1m[93melectron-backend:[39m[22m     modules by path ./libs/shared/database/src/ 23 KiB 3 modules
+[1m[93melectron-backend:[39m[22m     modules by path ./libs/shared/m3u-utils/src/ 3.26 KiB 2 modules
+[1m[93melectron-backend:[39m[22m     + 1 module
+[1m[93melectron-backend:[39m[22m   modules by path ./apps/electron-backend/src/ 210 KiB 30 modules
+[1m[93melectron-backend:[39m[22m modules by path external "drizzle-orm/ 84 bytes
+[1m[93melectron-backend:[39m[22m   external "drizzle-orm/sqlite-core" 42 bytes [built] [code generated]
+[1m[93melectron-backend:[39m[22m   external "drizzle-orm/better-sqlite3" 42 bytes [built] [code generated]
+[1m[93melectron-backend:[39m[22m + 23 modules
+[1m[93melectron-backend:[39m[22m webpack 5.104.1 compiled successfully in 10151 ms
+
+[2m> [22m[2mnx run[22m electron-backend:make
+
+electron-backend: *********************************************************
+electron-backend: DO NOT FORGET TO REBUILD YOUR FRONTEND & BACKEND PROJECTS
+electron-backend: FOR PRODUCTION BEFORE PACKAGING / MAKING YOUR ARTIFACT!
+electron-backend: *********************************************************
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m electron-builder  [34mversion[39m=26.0.12 [34mos[39m=10.0.26300
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m loaded configuration  [34mfile[39m=C:\prgtm\iptvmate\iptvmate-0.21.1\electron-builder.json
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m executing @electron/rebuild  [34melectronVersion[39m=35.7.5 [34march[39m=x64 [34mbuildFromSource[39m=false [34mappDir[39m=./
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m installing native dependencies  [34march[39m=x64
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m preparing       [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m finished        [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m completed installing native dependencies
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m packaging       [34mplatform[39m=win32 [34march[39m=x64 [34melectron[39m=35.7.5 [34mappOutDir[39m=dist\executables\win-unpacked
+electron-backend: (node:5264) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+electron-backend: (Use `node --trace-deprecation ...` to show where the warning was created)
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m updating asar integrity executable resource  [34mexecutablePath[39m=dist\executables\win-unpacked\iptvmate.exe
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\win-unpacked\iptvmate.exe
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\win-unpacked\resources\app.asar.unpacked\node_modules\@ffmpeg-installer\win32-x64\ffmpeg.exe
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m building        [34mtarget[39m=nsis [34mfile[39m=dist\executables\iptvmate-0.23.2-windows-x64-setup.exe [34marchs[39m=x64 [34moneClick[39m=true [34mperMachine[39m=false
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\win-unpacked\resources\elevate.exe
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\__uninstaller-nsis-iptvmate.exe
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=dist\executables\iptvmate-0.23.2-windows-x64-setup.exe
+[1m[93melectron-backend:[39m[22m   [34mΓÇó[39m 
+[1m[93melectron-backend:[39m[22m building block map  [34mblockMapFile[39m=dist\executables\iptvmate-0.23.2-windows-x64-setup.exe.blockmap
+
+[2m[32m[39m[22m
+
+[7m[1m[32m NX [39m[22m[27m  [32mSuccessfully ran target [1mmake[22m for project electron-backend and [1m6[22m tasks it depends on[39m
+
+[2mNx read the output from the cache instead of running the command for 4 out of 7 tasks.[22m
+

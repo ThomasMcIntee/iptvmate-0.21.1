@@ -1,160 +1,289 @@
-name: Build and Make Electron App
+import { app, BrowserWindow, Menu, screen, session, shell } from 'electron';
+import { join } from 'path';
+import { rendererAppName, rendererAppPort } from './constants';
+import { store, WINDOW_BOUNDS } from './services/store.service';
 
-on:
-    push:
-        branches:
-            - master
-        tags:
-            - 'v*.*.*'
-    pull_request:
-        branches:
-            - master
-    workflow_dispatch:
+export default class App {
+    // Keep a global reference of the window object, if you don't, the window will
+    // be closed automatically when the JavaScript object is garbage collected.
+    static mainWindow: Electron.BrowserWindow | null;
+    static application: Electron.App;
+    static BrowserWindow: typeof BrowserWindow;
 
-jobs:
-    build:
-        name: Build on ${{ matrix.os }} ${{ matrix.arch }}
-        runs-on: ${{ matrix.runner }}
-        timeout-minutes: 60
-        strategy:
-            matrix:
-                include:
-                    # macOS builds - separate runners to avoid native module conflicts
-                    - os: macos
-                      runner: macos-15-intel
-                      arch: x64
-                    - os: macos
-                      runner: macos-latest
-                      arch: arm64
-                    # Linux and Windows
-                    - os: linux
-                      runner: ubuntu-latest
-                    - os: windows
-                      runner: windows-latest
+    public static isDevelopmentMode() {
+        // First check ELECTRON_IS_DEV environment variable (used by E2E tests)
+        // This allows E2E tests to run in production mode without packaging
+        if ('ELECTRON_IS_DEV' in process.env) {
+            return parseInt(process.env.ELECTRON_IS_DEV || '0', 10) === 1;
+        }
+        // Fall back to Electron's built-in app.isPackaged
+        // This is the most reliable way to detect if the app is packaged
+        return !app.isPackaged;
+    }
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    private static onWindowAllClosed() {
+        if (process.platform !== 'darwin') {
+            App.application.quit();
+        }
+    }
 
-            - name: Install pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10
+    private static onClose() {
+        // Dereference the window object, usually you would store windows
+        // in an array if your app supports multi windows, this is the time
+        // when you should delete the corresponding element.
+        App.mainWindow = null;
+    }
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: '24'
-                  cache: 'pnpm'
+    private static onRedirect(
+        event: { preventDefault: () => void },
+        url: string
+    ) {
+        const mainWindow = App.mainWindow;
 
-            - name: Install Linux system dependencies
-              if: matrix.os == 'linux'
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install --no-install-recommends -y rpm libarchive-tools flatpak flatpak-builder
+        if (mainWindow && url !== mainWindow.webContents.getURL()) {
+            // this is a normal external redirect, open it in a new browser window
+            event.preventDefault();
+            shell.openExternal(url);
+        }
+    }
 
-                  # Configure Flatpak
-                  # 1. Add the Flathub repository (source of runtimes)
-                  flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+    private static onReady() {
+        // This method will be called when Electron has finished
+        // initialization and is ready to create browser windows.
+        // Some APIs can only be used after this event occurs.
 
-                  # 2. Install the standard Freedesktop Platform and SDK (required by electron-builder)
-                  # We install version 24.08 as a safe default, electron-builder might pick what it needs
-                  flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+        if (App.mainWindow && !App.mainWindow.isDestroyed()) {
+            if (App.mainWindow.isMinimized()) {
+                App.mainWindow.restore();
+            }
+            App.mainWindow.focus();
+            return;
+        }
 
-            - name: Install dependencies
-              run: pnpm install --no-frozen-lockfile
+        // Allow IPTV stream servers with non-standard TLS configurations
+        // (e.g. outdated cipher suites) by bypassing certificate verification.
+        session.defaultSession.setCertificateVerifyProc((_request, callback) => {
+            callback(0); // 0 = success, bypass certificate errors
+        });
 
-            - name: Build frontend
-              run: npx nx build web --skip-nx-cache
+        if (rendererAppName) {
+            App.initMainWindow();
+            App.loadMainWindow();
+        }
+    }
 
-            - name: Build backend
-              run: npm run build:backend
+    private static onActivate() {
+        // On macOS it's common to re-create a window in the app when the
+        // dock icon is clicked and there are no other windows open.
+        if (App.mainWindow === null) {
+            App.onReady();
+        }
+    }
 
-            - name: Make Electron app
-              if: matrix.os != 'macos'
-              run: npm run make:app
+    private static initMainWindow() {
+        if (App.mainWindow && !App.mainWindow.isDestroyed()) {
+            return;
+        }
 
-            - name: Upload artifacts (macOS)
-              if: matrix.os == 'macos'
-              uses: actions/upload-artifact@v4
-              with:
-                  name: macos-${{ matrix.arch }}-artifacts
-                  path: |
-                      dist/executables/**/*.dmg
-                      dist/executables/**/*.zip
-                  retention-days: 7
+        const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
+        const defaultWidth = Math.min(1280, workAreaSize.width || 1280);
+        const defaultHeight = Math.min(720, workAreaSize.height || 720);
 
-            - name: Upload artifacts (Linux)
-              if: matrix.os == 'linux'
-              uses: actions/upload-artifact@v4
-              with:
-                  name: linux-artifacts
-                  path: |
-                      dist/executables/**/*.deb
-                      dist/executables/**/*.rpm
-                      dist/executables/**/*.snap
-                      dist/executables/**/*.AppImage
-                      dist/executables/**/*.tar.gz
-                      dist/executables/**/*.pacman
-                      dist/executables/**/*.flatpak
-                  retention-days: 7
+        const savedWindowBounds = store.get(WINDOW_BOUNDS);
+        const { width, height, ...restSavedWindowBounds } = savedWindowBounds ?? {};
 
-            - name: Upload artifacts (Windows)
-              if: matrix.os == 'windows'
-              uses: actions/upload-artifact@v4
-              with:
-                  name: windows-artifacts
-                  path: |
-                      dist/executables/**/*.exe
-                      dist/executables/**/*.msi
-                      dist/executables/**/*.zip
-                  retention-days: 7
+        // Create the browser window.
+        App.mainWindow = new BrowserWindow({
+            title: 'iptvmate',
+            show: false,
+            ...restSavedWindowBounds,
+            webPreferences: {
+                contextIsolation: true,
+                backgroundThrottling: false,
+                preload: join(__dirname, 'main.preload.js'),
+            },
+            minHeight: 600,
+            minWidth: 900,
+            width: width ?? defaultWidth,
+            height: height ?? defaultHeight,
+            ...(process.platform === 'darwin'
+                ? {
+                      titleBarStyle: 'hidden',
+                      titleBarOverlay: true,
+                  }
+                : {}),
+        });
+        const mainWindow = App.mainWindow;
 
-    create-release:
-        name: Create Draft Release
-        needs: build
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
+        if (!mainWindow) {
+            return;
+        }
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+        mainWindow.setMenu(null);
+        if (!savedWindowBounds) {
+            mainWindow.center();
+        }
 
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: artifacts
+        // Allow opening DevTools via F12 or Ctrl/Cmd+Shift+I even when the
+        // application menu is suppressed.
+        mainWindow.webContents.on('before-input-event', (_event, input) => {
+            if (input.type !== 'keyDown') return;
+            const isToggleDevtools =
+                input.key === 'F12' ||
+                ((input.control || input.meta) && input.shift && (input.key === 'I' || input.key === 'i'));
+            const isReload =
+                ((input.control || input.meta) && (input.key === 'R' || input.key === 'r')) ||
+                input.key === 'F5';
+            if (isToggleDevtools) {
+                if (mainWindow.webContents.isDevToolsOpened()) {
+                    mainWindow.webContents.closeDevTools();
+                } else {
+                    // Open in a separate undocked window so it can't be hidden
+                    // behind the main window when the user clicks back.
+                    mainWindow.webContents.openDevTools({ mode: 'detach' });
+                }
+            } else if (isReload) {
+                if (input.shift) {
+                    mainWindow.webContents.reloadIgnoringCache();
+                } else {
+                    mainWindow.webContents.reload();
+                }
+            }
+        });
 
-            - name: Display structure of downloaded files
-              run: ls -R artifacts
+        // if main window is ready to show, close the splash window and show the main window
+        mainWindow.once('ready-to-show', () => {
+            // In development, delay showing until content loads
+            if (App.isDevelopmentMode()) {
+                // Show after a delay to allow retry to succeed
+                setTimeout(() => {
+                    mainWindow.show();
+                }, 4000);
+            } else {
+                mainWindow.show();
+            }
+        });
 
-            - name: Get version from package.json
-              id: package-version
-              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        // handle all external redirects in a new browser window
+        // App.mainWindow.webContents.on('will-navigate', App.onRedirect);
+        // App.mainWindow.webContents.on('new-window', (event, url, frameName, disposition, options) => {
+        //     App.onRedirect(event, url);
+        // });
 
-            - name: Create Draft Release
-              uses: softprops/action-gh-release@v2
-              with:
-                  draft: true
-                  prerelease: ${{ github.event_name == 'pull_request' }}
-                  name: Release v${{ steps.package-version.outputs.version }}
-                  tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('test-{0}', github.sha) }}
-                  generate_release_notes: true
-                  files: |
-                      artifacts/macos-x64-artifacts/*-x64.dmg
-                      artifacts/macos-x64-artifacts/*-x64.zip
-                      artifacts/macos-arm64-artifacts/*-arm64.dmg
-                      artifacts/macos-arm64-artifacts/*-arm64.zip
-                      artifacts/linux-artifacts/*.AppImage
-                      artifacts/linux-artifacts/*.deb
-                      artifacts/linux-artifacts/*.rpm
-                      artifacts/linux-artifacts/*.snap
-                      artifacts/linux-artifacts/*.tar.gz
-                      artifacts/linux-artifacts/*.pacman
-                      artifacts/linux-artifacts/*.flatpak
-                      artifacts/windows-artifacts/*-setup.exe
-                      artifacts/windows-artifacts/*.msi
-                      artifacts/windows-artifacts/*.zip
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        // Block renderer popups/new windows and route external URLs to system browser.
+        mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+            if (url && /^https?:\/\//i.test(url)) {
+                void shell.openExternal(url);
+            }
+            return { action: 'deny' };
+        });
+
+        // Emitted when the window is closed.
+        mainWindow.on('closed', () => {
+            // Dereference the window object, usually you would store windows
+            // in an array if your app supports multi windows, this is the time
+            // when you should delete the corresponding element.
+            App.mainWindow = null;
+        });
+
+        mainWindow.on('close', () => {
+            if (App.mainWindow) {
+                store.set(WINDOW_BOUNDS, App.mainWindow.getNormalBounds());
+            }
+        });
+
+        // Enable context menu for input fields only
+        mainWindow.webContents.on('context-menu', (_event, params) => {
+            const { isEditable, editFlags } = params;
+
+            // Check if this is an editable field (input, textarea, contenteditable)
+            // editFlags.canPaste is a good indicator of an input field
+            if (isEditable && editFlags.canPaste) {
+                const menu = Menu.buildFromTemplate([
+                    {
+                        label: 'Cut',
+                        role: 'cut',
+                        enabled: editFlags.canCut,
+                    },
+                    {
+                        label: 'Copy',
+                        role: 'copy',
+                        enabled: editFlags.canCopy,
+                    },
+                    {
+                        label: 'Paste',
+                        role: 'paste',
+                        enabled: editFlags.canPaste,
+                    },
+                    {
+                        type: 'separator',
+                    },
+                    {
+                        label: 'Select All',
+                        role: 'selectAll',
+                        enabled: editFlags.canSelectAll,
+                    },
+                ]);
+
+                menu.popup();
+            }
+        });
+    }
+
+    private static loadMainWindow() {
+        const mainWindow = App.mainWindow;
+
+        if (!mainWindow) {
+            return;
+        }
+
+        // load the index.html of the app.
+        if (App.isDevelopmentMode()) {
+            const url = `http://localhost:${rendererAppPort}`;
+            const tryLoad = () => {
+                mainWindow.loadURL(url).catch(() => {
+                    // Angular dev server not ready yet ΓÇô retry after 1s
+                    setTimeout(tryLoad, 1000);
+                });
+            };
+            // Wait 3s for dev server to start before first attempt
+            setTimeout(tryLoad, 3000);
+            if (process.env.ELECTRON_OPEN_DEVTOOLS === '1') {
+                mainWindow.webContents.openDevTools({ mode: 'bottom' });
+            }
+        } else {
+            mainWindow.loadFile(join(__dirname, '..', rendererAppName, 'index.html'));
+        }
+    }
+
+    static main(app: Electron.App, browserWindow: typeof BrowserWindow) {
+        // we pass the Electron.App object and the
+        // Electron.BrowserWindow into this function
+        // so this class has no dependencies. This
+        // makes the code easier to write tests for
+
+        App.BrowserWindow = browserWindow;
+        App.application = app;
+
+        App.application.on('window-all-closed', App.onWindowAllClosed); // Quit when all windows are closed.
+        App.application.on('ready', App.onReady); // App is ready to load data
+        App.application.on('activate', App.onActivate); // App is activated
+        App.application.on('browser-window-created', (_event, window) => {
+            if (!App.mainWindow || window === App.mainWindow) {
+                return;
+            }
+
+            if (App.mainWindow.isMinimized()) {
+                App.mainWindow.restore();
+            }
+            App.mainWindow.focus();
+
+            // Defensive guard: this app is intended to run with a single main window.
+            window.close();
+        });
+        App.application.on('before-quit', () => {
+            if (App.mainWindow)
+                store.set(WINDOW_BOUNDS, App.mainWindow.getNormalBounds());
+        });
+    }
+}
