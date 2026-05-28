@@ -5,13 +5,13 @@ services:
     ports:
       - "7333:3000"
     environment:
-      - CLIENT_URL=http://localhost:4333 
+      - CLIENT_URL=http://localhost:4200 
       # this one should match with the address and port in frontend CLIENT_URL env
       
   frontend: 
     image: thomasmcintee/iptvmate-0.21.1:latest
     ports:
-      - "4333:80"
+      - "3200:80"
     environment:
       - BACKEND_URL=http://localhost:7333 
       # this one should match with the address of the backend service

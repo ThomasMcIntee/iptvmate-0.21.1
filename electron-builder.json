@@ -19,7 +19,9 @@
     "asarUnpack": [
         "**/better-sqlite3/**",
         "**/bindings/**",
-        "**/file-uri-to-path/**"
+        "**/file-uri-to-path/**",
+        "**/@ffmpeg-installer/**",
+        "**/ffmpeg-static/**"
     ],
     "extraMetadata": {
         "main": "electron-backend/main.js"

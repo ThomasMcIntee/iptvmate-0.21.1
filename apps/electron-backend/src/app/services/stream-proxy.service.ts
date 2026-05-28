@@ -23,9 +23,19 @@ const M3U8_CONTENT_TYPES = [
 ];
 
 const STREAM_PROXY_VERSION = '2026-05-14-r6';
-const FFMPEG_STATIC_BIN = typeof ffmpegPath === 'string' ? ffmpegPath : null;
-const FFMPEG_INSTALLER_BIN =
-    typeof ffmpegInstaller?.path === 'string' ? ffmpegInstaller.path : null;
+// electron-builder unpacks native binaries from inside app.asar into a sibling
+// app.asar.unpacked directory; the module's reported `path` still references
+// the asar location and cannot be spawned, so rewrite it.
+function unpackAsarPath(p: string | null): string | null {
+    if (!p) return null;
+    return p.replace(/([\\/])app\.asar([\\/])/, '$1app.asar.unpacked$2');
+}
+const FFMPEG_STATIC_BIN = unpackAsarPath(
+    typeof ffmpegPath === 'string' ? ffmpegPath : null
+);
+const FFMPEG_INSTALLER_BIN = unpackAsarPath(
+    typeof ffmpegInstaller?.path === 'string' ? ffmpegInstaller.path : null
+);
 const FFMPEG_BIN =
     (FFMPEG_STATIC_BIN && fs.existsSync(FFMPEG_STATIC_BIN)
         ? FFMPEG_STATIC_BIN
@@ -261,6 +271,144 @@ function maybeTranscodeResponse(
     return true;
 }
 
+/**
+ * Audio-only transcode by giving ffmpeg the source URL directly. This lets
+ * ffmpeg use HTTP Range requests to read MP4 `moov` atoms (which often sit at
+ * the end of the file), something we cannot do when piping into stdin.
+ * Video is copied; audio is re-encoded to AAC inside an MPEG-TS container so
+ * Chromium can decode it even when the source uses AC-3/E-AC-3/DTS.
+ */
+function spawnUrlAudioTranscode(
+    req: IncomingMessage,
+    res: ServerResponse,
+    targetUrl: string,
+    userAgent?: string
+): void {
+    if (!HAS_WORKING_FFMPEG || !FFMPEG_BIN) {
+        res.writeHead(502);
+        res.end('ffmpeg unavailable');
+        return;
+    }
+
+    console.log(
+        `[StreamProxy] direct-url audio transcode via ${FFMPEG_SOURCE}: ${targetUrl}`
+    );
+
+    res.writeHead(200, {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'GET, HEAD, OPTIONS',
+        'access-control-allow-headers': 'Range, Content-Type',
+        'cache-control': 'no-store',
+        'content-type': 'video/mp2t',
+        'transfer-encoding': 'chunked',
+    });
+
+    const ffmpegArgs: string[] = [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-reconnect',
+        '1',
+        '-reconnect_streamed',
+        '1',
+        '-reconnect_at_eof',
+        '1',
+        '-reconnect_delay_max',
+        '5',
+        '-rw_timeout',
+        '15000000',
+        '-tls_verify',
+        '0',
+    ];
+    if (userAgent) {
+        ffmpegArgs.push('-user_agent', userAgent);
+    }
+    ffmpegArgs.push(
+        '-probesize',
+        '10M',
+        '-analyzeduration',
+        '20M',
+        '-i',
+        targetUrl,
+        '-map',
+        '0:v:0?',
+        '-map',
+        '0:a:0?',
+        '-sn',
+        '-dn',
+        '-c:v',
+        'copy',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '192k',
+        '-ac',
+        '2',
+        '-ar',
+        '48000',
+        '-max_muxing_queue_size',
+        '4096',
+        '-muxdelay',
+        '0',
+        '-muxpreload',
+        '0',
+        '-f',
+        'mpegts',
+        'pipe:1'
+    );
+
+    const ffmpeg = spawn(FFMPEG_BIN, ffmpegArgs, {
+        windowsHide: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let ffmpegErrorOutput = '';
+    ffmpeg.stderr.on('data', (chunk: Buffer) => {
+        ffmpegErrorOutput += chunk.toString('utf8');
+        if (ffmpegErrorOutput.length > 8000) {
+            ffmpegErrorOutput = ffmpegErrorOutput.slice(-8000);
+        }
+    });
+
+    const terminate = () => {
+        if (ffmpeg.killed) return;
+        ffmpeg.kill('SIGTERM');
+        setTimeout(() => {
+            if (!ffmpeg.killed) ffmpeg.kill('SIGKILL');
+        }, 1000);
+    };
+    req.on('aborted', terminate);
+    req.on('close', terminate);
+
+    ffmpeg.on('error', (error) => {
+        console.error('[StreamProxy] ffmpeg spawn failed:', error);
+        if (!res.headersSent) {
+            res.writeHead(502);
+            res.end('Transcoding failed');
+        } else if (!res.writableEnded) {
+            res.end();
+        }
+    });
+    ffmpeg.on('close', (code, signal) => {
+        if (signal && (req.aborted || res.writableEnded || res.destroyed)) {
+            console.log(
+                `[StreamProxy] direct-url ffmpeg terminated by ${signal} after client disconnect`
+            );
+            return;
+        }
+        if (code !== 0) {
+            console.error(
+                `[StreamProxy] direct-url ffmpeg exited with code ${code}${
+                    signal ? ` (signal ${signal})` : ''
+                }. ${ffmpegErrorOutput}`
+            );
+        }
+        if (!res.writableEnded) res.end();
+    });
+
+    ffmpeg.stdout.pipe(res);
+}
+
 function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
     const reqUrl = req.url || '';
     const searchStart = reqUrl.indexOf('?');
@@ -293,6 +441,15 @@ function handleProxyRequest(req: IncomingMessage, res: ServerResponse) {
     } catch {
         res.writeHead(400);
         res.end('Invalid URL');
+        return;
+    }
+
+    // Fast path: audio-only transcode reads the URL directly with ffmpeg so it
+    // can seek into MP4 `moov` atoms (impossible when piping into stdin).
+    if (shouldTranscodeRequest && transcodeMode === 'audio') {
+        const uaHeader = req.headers['user-agent'];
+        const userAgent = Array.isArray(uaHeader) ? uaHeader[0] : uaHeader;
+        spawnUrlAudioTranscode(req, res, target.toString(), userAgent);
         return;
     }
 

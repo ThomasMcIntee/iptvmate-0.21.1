@@ -26,7 +26,7 @@ Done compiling TypeScript files for project "shared-interfaces".
 
 [1m [22m                    [2m | [22m[1mInitial total[22m[2m | [22m[1m215.73 kB[22m[2m | [22m               [1m62.99 kB[22m
 
-Application bundle generation complete. [2.835 seconds] - 2026-05-26T20:33:35.012Z
+Application bundle generation complete. [2.887 seconds] - 2026-05-26T20:44:54.112Z
 [39m
 [1m[33m[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mlibs/ui/remote-control/src/lib/remote-control/remote-control.component.scss exceeded maximum budget. Budget 4.00 kB was not met by 660 bytes with a total of 4.66 kB.[0m
 
@@ -88,7 +88,7 @@ Done compiling TypeScript files for project "m3u-utils".
 [32mchunk-FB3T37NG.js[37m    [2m | [22m[2mcategory-content-view-component[22m     [2m | [22m [36m15.48 kB[37m[2m | [22m                [36m4.48 kB[37m
 [2m...and 27 more lazy chunks files. Use "--verbose" to show all the files.[22m
 
-Application bundle generation complete. [16.674 seconds] - 2026-05-26T20:33:55.132Z
+Application bundle generation complete. [16.649 seconds] - 2026-05-26T20:45:14.197Z
 [39m
 [1m[33m[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: MatIconButton is not used within the template of PlayerDialogComponent[0m [1m[35m[plugin angular-compiler][0m
 
@@ -100,10 +100,10 @@ Application bundle generation complete. [16.674 seconds] - 2026-05-26T20:33:55.1
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mbundle initial exceeded maximum budget. Budget 500.00 kB was not met by 4.08 MB with a total of 4.58 MB.[0m
 
 
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mapps/web/src/app/xtream/season-container/season-container.component.scss exceeded maximum budget. Budget 10.00 kB was not met by 482 bytes with a total of 10.48 kB.[0m
+
+
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mlibs/ui/components/src/lib/multi-epg/multi-epg-container.component.scss exceeded maximum budget. Budget 10.00 kB was not met by 2.33 kB with a total of 12.33 kB.[0m
-
-
-[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mapps/web/src/app/xtream-tauri/season-container/season-container.component.scss exceeded maximum budget. Budget 10.00 kB was not met by 482 bytes with a total of 10.48 kB.[0m
 
 
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'lodash/groupBy' used by 'apps/web/src/app/xtream-tauri/recently-viewed/recently-viewed.component.ts' is not ESM[0m
@@ -121,10 +121,10 @@ Application bundle generation complete. [16.674 seconds] - 2026-05-26T20:33:55.1
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'semver' used by 'apps/web/src/app/services/settings.service.ts' is not ESM[0m
 
   CommonJS or AMD dependencies can cause optimization bailouts.
-  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[[39m[22m[1m[33m0m
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
 
 
-[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'iptv-playlist-parser' used by 'libs/services/src/lib/playlists.service.ts' is not ESM[0m
+[39m[22m[1m[33m[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'iptv-playlist-parser' used by 'libs/services/src/lib/playlists.service.ts' is not ESM[0m
 
   CommonJS or AMD dependencies can cause optimization bailouts.
   For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
@@ -157,7 +157,7 @@ Application bundle generation complete. [16.674 seconds] - 2026-05-26T20:33:55.1
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule '@videojs/xhr' used by 'node_modules/.pnpm/video.js@8.23.7/node_modules/video.js/dist/video.es.js' is not ESM[0m
 
   CommonJS or AMD dependencies can cause optimization bailouts.
-  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-co[39m[22m[1m[33mmmonjs-dependencies[0m
+  For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs[39m[22m[1m[33m-dependencies[0m
 
 
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'videojs-vtt.js' used by 'node_modules/.pnpm/video.js@8.23.7/node_modules/video.js/dist/video.es.js' is not ESM[0m
@@ -192,7 +192,7 @@ Application bundle generation complete. [16.674 seconds] - 2026-05-26T20:33:55.1
 
 [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mModule 'safe-json-parse/tuple' used by 'node_modules/.pnpm/video.js@7.21.7/node_modules/video.js/dist/video.es.js' is not ESM[0m
 
-  CommonJS or AMD dependencies can cause optimi[39m[22m[1m[33mzation bailouts.
+  CommonJS or AMD dependencies can cause optimization[39m[22m[1m[33m bailouts.
   For more information see: [4mhttps://angular.dev/tools/cli/build#configuring-commonjs-dependencies[0m
 
 
@@ -225,21 +225,21 @@ Application bundle generation complete. [16.674 seconds] - 2026-05-26T20:33:55.1
 
 [2m> [22m[2mnx run[22m electron-backend:build
 
-asset main.js 263 KiB [compared for emit] [big] (name: main) 1 related asset
+asset main.js 267 KiB [emitted] [big] (name: main) 1 related asset
 asset main.preload.js 12.3 KiB [compared for emit] (name: main.preload) 1 related asset
 asset assets/gitkeep_tmpl_ 13 bytes [compared for emit] [from: apps/electron-backend/src/assets/gitkeep_tmpl_] [copied]
-cacheable modules 258 KiB
+cacheable modules 262 KiB
   modules by path ./libs/shared/ 46.4 KiB
     modules by path ./libs/shared/interfaces/src/lib/*.ts 17.7 KiB 33 modules
     modules by path ./libs/shared/database/src/ 23 KiB 3 modules
     modules by path ./libs/shared/m3u-utils/src/ 3.26 KiB 2 modules
     + 1 module
-  modules by path ./apps/electron-backend/src/ 211 KiB 30 modules
+  modules by path ./apps/electron-backend/src/ 215 KiB 30 modules
 modules by path external "drizzle-orm/ 84 bytes
   external "drizzle-orm/sqlite-core" 42 bytes [built] [code generated]
   external "drizzle-orm/better-sqlite3" 42 bytes [built] [code generated]
 + 23 modules
-webpack 5.104.1 compiled successfully in 8884 ms
+webpack 5.104.1 compiled successfully in 8469 ms
 
 [2m> [22m[2mnx run[22m electron-backend:make --outputPath=../iptvmate-build-out
 
@@ -256,11 +256,26 @@ executing @electron/rebuild  [34melectronVersion[39m=35.7.5 [34march[39m=x64
 installing native dependencies  [34march[39m=x64
   [34mΓÇó[39m 
 preparing       [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
-  [34mΓÇó[39m 
-finished        [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
-  [34mΓÇó[39m 
-completed installing native dependencies
+  [34mΓÇó[39m finished        [34mmoduleName[39m=better-sqlite3 [34march[39m=x64
+  [34mΓÇó[39m completed installing native dependencies
   [34mΓÇó[39m 
 packaging       [34mplatform[39m=win32 [34march[39m=x64 [34melectron[39m=35.7.5 [34mappOutDir[39m=C:\prgtm\iptvmate\iptvmate-build-out\win-unpacked
-(node:57356) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(node:45764) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
 (Use `node --trace-deprecation ...` to show where the warning was created)
+  [34mΓÇó[39m updating asar integrity executable resource  [34mexecutablePath[39m=C:\prgtm\iptvmate\iptvmate-build-out\win-unpacked\iptvmate.exe
+  [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=C:\prgtm\iptvmate\iptvmate-build-out\win-unpacked\iptvmate.exe
+  [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=C:\prgtm\iptvmate\iptvmate-build-out\win-unpacked\resources\app.asar.unpacked\node_modules\@ffmpeg-installer\win32-x64\ffmpeg.exe
+  [34mΓÇó[39m 
+building        [34mtarget[39m=nsis [34mfile[39m=C:\prgtm\iptvmate\iptvmate-build-out\iptvmate-0.23.2-windows-x64-setup.exe [34marchs[39m=x64 [34moneClick[39m=true [34mperMachine[39m=false
+  [34mΓÇó[39m 
+signing with signtool.exe  [34mpath[39m=C:\prgtm\iptvmate\iptvmate-build-out\win-unpacked\resources\elevate.exe
+  [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=C:\prgtm\iptvmate\iptvmate-build-out\__uninstaller-nsis-iptvmate.exe
+  [34mΓÇó[39m signing with signtool.exe  [34mpath[39m=C:\prgtm\iptvmate\iptvmate-build-out\iptvmate-0.23.2-windows-x64-setup.exe
+  [34mΓÇó[39m 
+building block map  [34mblockMapFile[39m=C:\prgtm\iptvmate\iptvmate-build-out\iptvmate-0.23.2-windows-x64-setup.exe.blockmap
+
+[2m[32m[39m[22m
+
+[7m[1m[32m NX [39m[22m[27m  [32mSuccessfully ran target [1mmake[22m for project electron-backend and [1m6[22m tasks it depends on[39m
+
+

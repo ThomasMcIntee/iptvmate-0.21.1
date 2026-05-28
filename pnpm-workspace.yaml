@@ -8,6 +8,7 @@ allowBuilds:
   ffmpeg-static: false
   less: false
   lmdb: false
+  lzma-native: true
   msgpackr-extract: false
   nx: false
   sharp: false
@@ -25,4 +26,3 @@ onlyBuiltDependencies:
   - better-sqlite3
   - electron
   - nx
-  
