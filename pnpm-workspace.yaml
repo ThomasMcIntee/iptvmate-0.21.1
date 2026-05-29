@@ -4,6 +4,7 @@ allowBuilds:
   better-sqlite3: true
   electron: true
   electron-winstaller: false
+  es5-ext: true
   esbuild: false
   ffmpeg-static: false
   less: false

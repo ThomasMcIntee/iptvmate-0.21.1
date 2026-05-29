@@ -1,5 +1,5 @@
 {
-    "appId": "com.fourgray.iptvmate",
+    "appId": "com.iptvmate",
     "productName": "iptvmate",
     "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
     "directories": {
