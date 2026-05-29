@@ -20,7 +20,11 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v4
+     - uses: actions/checkout@v4
+     - name: Clean node_modules
+       run: rm -rf node_modules
+     - name: Install Dependencies
+       run: pnpm install --no-frozen-lockfile - uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
